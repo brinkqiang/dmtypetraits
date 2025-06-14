@@ -75,8 +75,19 @@ inline constexpr bool dm_is_container_v = dm_has_begin_v<T> && dm_has_end_v<T> &
  * 通过判断 T 是一个枚举，但不能隐式转换为其底层类型来实现。
  */
 template<typename T>
-inline constexpr bool dm_is_scoped_enum_v = dm_is_enum_v<T> && !dm_is_convertible_v<T, dm_underlying_type_t<T>>;
-
+inline constexpr bool dm_is_scoped_enum_v = []() {
+    // 首先，使用 if constexpr 检查 T 是否为枚举
+    if constexpr (dm_is_enum_v<T>) {
+        // 只有当 T 是枚举时，这个分支才会被实例化和编译
+        // 在这里调用 dm_underlying_type_t 是安全的
+        return !dm_is_convertible_v<T, dm_underlying_type_t<T>>;
+    }
+    else {
+        // 如果 T 不是枚举，上面那个 if 分支会被完全丢弃，根本不会编译
+        // 编译器只会看到这个分支
+        return false;
+    }
+}(); // 使用立即调用的 lambda 来包裹 if constexpr
 
 /**
  * @brief 判断类型 T 是否能像字符串一样使用。

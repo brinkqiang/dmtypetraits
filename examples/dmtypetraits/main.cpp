@@ -34,11 +34,7 @@ int main() {
     std::cout << "\n--- Testing dm_is_scoped_enum_v ---" << std::endl;
     std::cout << "CStyleEnum is a scoped enum? " << dm_is_scoped_enum_v<CStyleEnum> << std::endl;
     std::cout << "ScopedEnum is a scoped enum? " << dm_is_scoped_enum_v<ScopedEnum> << std::endl;
-
-    // 下面这行代码中的 `dm_is_scoped_v` 已被修正为 `dm_is_scoped_enum_v`
-    // 注意：即使修正后，这行代码在编译时也应该失败，因为 `dm_underlying_type_t` 对非枚举类型(如 int)无效。
-    // 这证明了类型萃取按预期工作。为了让整个文件能够编译，您可以注释掉它。
-    // std::cout << "int is a scoped enum? " << dm_is_scoped_enum_v<int> << std::endl;
+    std::cout << "int is a scoped enum? " << dm_is_scoped_enum_v<int> << std::endl;
 
 
     // 3. 测试 dm_is_string_like_v
