@@ -1,6 +1,7 @@
 #ifndef __DMINTERFACE_TRAITS_H_INCLUDE__
 #define __DMINTERFACE_TRAITS_H_INCLUDE__
 
+#include "dmos.h"
 #include "dmtypetraits.h"
 #include "dmmoduleptr.h"
 

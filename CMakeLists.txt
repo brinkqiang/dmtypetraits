@@ -29,6 +29,8 @@ ModuleImportAll("thirdparty")
 InterfaceImport("libdmtypetraits" "src/libdmtypetraits" "")
 
 if(PROJECT_IS_TOP_LEVEL)
+    ExeImport("test" "libdmtypetraits;dmtest")
+
     ExeImport("examples" "libdmtypetraits")
 endif()
 

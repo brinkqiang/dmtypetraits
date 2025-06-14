@@ -226,37 +226,17 @@ inline constexpr bool dm_is_numeric_v = dm_is_integral_v<T> || dm_is_floating_po
 // 实用工具萃取
 //-----------------------------------------------------------------------------
 
-/**
- * @brief 获取容器的元素类型
- */
 template<typename T>
 struct dm_element_type {
-    using type = void; // 默认为 void，表示不是容器
-};
-
-template<typename T>
-struct dm_element_type<T*> {
-    using type = T; // 指针的元素类型
-};
-
-template<typename T, std::size_t N>
-struct dm_element_type<T[N]> {
-    using type = T; // C数组的元素类型
-};
-
-template<typename T, std::size_t N>
-struct dm_element_type<std::array<T, N>> {
-    using type = T; // std::array的元素类型
-};
-
-// 对于有 value_type 的容器
-template<typename T>
-struct dm_element_type<T> {
+private:
+    // SFINAE: 如果 T 有 value_type，test 的返回类型就是 T::value_type
     template<typename U>
     static typename U::value_type test(typename U::value_type*);
+    // SFINAE: 否则，test 的返回类型是 void
     template<typename>
     static void test(...);
-    
+public:
+    // decltype 根据哪个 test 函数匹配成功来推导类型
     using type = decltype(test<T>(nullptr));
 };
 
