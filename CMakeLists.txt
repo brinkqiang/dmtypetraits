@@ -21,6 +21,9 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
+if(MSVC)
+    add_definitions(/Zc:__cplusplus)
+endif()
 ModuleImportAll("thirdparty")
 
 InterfaceImport("libdmtypetraits" "src/libdmtypetraits" "")
