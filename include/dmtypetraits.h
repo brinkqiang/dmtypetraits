@@ -1,150 +1,167 @@
-﻿
-// Copyright (c) 2018 brinkqiang (brink.qiang@gmail.com)
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-#ifndef __DMTYPETRAITS_H_INCLUDE__
-#define __DMTYPETRAITS_H_INCLUDE__
-
-#include "dmos.h" // dmos.h已经处理平台头文件, 以及相关宏定义
-#include "dmfix_win_utf8.h" // 处理 win平台utf8问题
-#include "dmmoduleptr.h"
-
-#ifndef __DMTYPETRAITS_H_INCLUDE__
+﻿#ifndef __DMTYPETRAITS_H_INCLUDE__
 #define __DMTYPETRAITS_H_INCLUDE__
 
 #include <type_traits>
-#include <utility>
 
-//================================================================================
-//                     dmtypetraits - 编译期特性判断库
-//================================================================================
-// 说明：
-// 本库提供一系列宏，用于在编译期检查类/结构体的成员属性。
-// 所有宏均以 DM_MEMBER_ 开头，返回一个编译期常量 bool 值。
-// 可用于 static_assert 或 if constexpr。
-//================================================================================
+// 仅在 C++20 及以上版本中引入 <concepts> 头文件
+#if __cplusplus >= 202002L
+#include <concepts>
+#endif
 
+//-----------------------------------------------------------------------------
+// 类型属性查询 (Type Property Queries)
+//-----------------------------------------------------------------------------
 
-/**
- * @brief 检查类 T 是否拥有名为 m 的成员。
- */
-#define DM_MEMBER_HAS(T, m) \
-    []() constexpr { \
-        if constexpr (requires(T& t) { t.m; }) { /* 检查实例成员 */ \
-            return true; \
-        } else if constexpr (requires { T::m; }) { /* 检查静态成员 */ \
-            return true; \
-        } else { \
-            return false; \
-        } \
-    }()
+// Primary type categories
+template<typename T>
+inline constexpr bool dm_is_void_v = std::is_void_v<T>;
+template<typename T>
+inline constexpr bool dm_is_null_pointer_v = std::is_null_pointer_v<T>;
+template<typename T>
+inline constexpr bool dm_is_integral_v = std::is_integral_v<T>;
+template<typename T>
+inline constexpr bool dm_is_floating_point_v = std::is_floating_point_v<T>;
+template<typename T>
+inline constexpr bool dm_is_array_v = std::is_array_v<T>;
+template<typename T>
+inline constexpr bool dm_is_enum_v = std::is_enum_v<T>;
+template<typename T>
+inline constexpr bool dm_is_union_v = std::is_union_v<T>;
+template<typename T>
+inline constexpr bool dm_is_class_v = std::is_class_v<T>;
+template<typename T>
+inline constexpr bool dm_is_function_v = std::is_function_v<T>;
+template<typename T>
+inline constexpr bool dm_is_pointer_v = std::is_pointer_v<T>;
+template<typename T>
+inline constexpr bool dm_is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
+template<typename T>
+inline constexpr bool dm_is_rvalue_reference_v = std::is_rvalue_reference_v<T>;
+template<typename T>
+inline constexpr bool dm_is_member_pointer_v = std::is_member_pointer_v<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为位域。
- */
-#define DM_MEMBER_IS_BITFIELD(T, m) \
-    []() constexpr { \
-        if constexpr (requires(T& t) { &(t.m); }) { \
-            return false; \
-        } else { \
-            return DM_MEMBER_HAS(T, m); \
-        } \
-    }()
+// Composite type categories
+template<typename T>
+inline constexpr bool dm_is_fundamental_v = std::is_fundamental_v<T>;
+template<typename T>
+inline constexpr bool dm_is_arithmetic_v = std::is_arithmetic_v<T>;
+template<typename T>
+inline constexpr bool dm_is_scalar_v = std::is_scalar_v<T>;
+template<typename T>
+inline constexpr bool dm_is_object_v = std::is_object_v<T>;
+template<typename T>
+inline constexpr bool dm_is_compound_v = std::is_compound_v<T>;
+template<typename T>
+inline constexpr bool dm_is_reference_v = std::is_reference_v<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为 static 成员。
- */
-#define DM_MEMBER_IS_STATIC(T, m) \
-    []() constexpr { \
-        if constexpr (requires { T::m; }) { \
-            return true; \
-        } else { \
-            return false; \
-        } \
-    }()
+// Type properties
+template<typename T>
+inline constexpr bool dm_is_const_v = std::is_const_v<T>;
+template<typename T>
+inline constexpr bool dm_is_volatile_v = std::is_volatile_v<T>;
+template<typename T>
+inline constexpr bool dm_is_trivial_v = std::is_trivial_v<T>;
+template<typename T>
+inline constexpr bool dm_is_trivially_copyable_v = std::is_trivially_copyable_v<T>;
+template<typename T>
+inline constexpr bool dm_is_standard_layout_v = std::is_standard_layout_v<T>;
+template<typename T>
+inline constexpr bool dm_is_empty_v = std::is_empty_v<T>;
+template<typename T>
+inline constexpr bool dm_is_polymorphic_v = std::is_polymorphic_v<T>;
+template<typename T>
+inline constexpr bool dm_is_abstract_v = std::is_abstract_v<T>;
+template<typename T>
+inline constexpr bool dm_is_final_v = std::is_final_v<T>;
+template<typename T>
+inline constexpr bool dm_is_aggregate_v = std::is_aggregate_v<T>; // C++17
+template<typename T>
+inline constexpr bool dm_is_signed_v = std::is_signed_v<T>;
+template<typename T>
+inline constexpr bool dm_is_unsigned_v = std::is_unsigned_v<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为 mutable 成员。
- */
-#define DM_MEMBER_IS_MUTABLE(T, m) \
-    []() constexpr { \
-        if constexpr (DM_MEMBER_HAS(T, m) && !DM_MEMBER_IS_STATIC(T, m)) { \
-            using MemberType = decltype(std::declval<T>().m); \
-            if constexpr (!std::is_const_v<MemberType> && \
-                          requires(const T& t) { t.m = std::declval<MemberType>(); }) { \
-                return true; \
-            } \
-        } \
-        return false; \
-    }()
+// Supported operations
+template<typename T, typename... Args>
+inline constexpr bool dm_is_constructible_v = std::is_constructible_v<T, Args...>;
+template<typename T>
+inline constexpr bool dm_is_default_constructible_v = std::is_default_constructible_v<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为 const (不可修改)。
- */
-#define DM_MEMBER_IS_CONST(T, m) \
-    []() constexpr { \
-        if constexpr (DM_MEMBER_HAS(T, m)) { \
-            using MemberType = decltype(std::declval<T&>().m); \
-            if constexpr (!requires(T& t) { t.m = std::declval<MemberType>(); }) { \
-                return true; \
-            } \
-        } \
-        return false; \
-    }()
+//-----------------------------------------------------------------------------
+// 类型关系查询 (Type Relationship Queries)
+//-----------------------------------------------------------------------------
 
+template<typename T, typename U>
+inline constexpr bool dm_is_same_v = std::is_same_v<T, U>;
+template<typename Base, typename Derived>
+inline constexpr bool dm_is_base_of_v = std::is_base_of_v<Base, Derived>;
+template<typename From, typename To>
+inline constexpr bool dm_is_convertible_v = std::is_convertible_v<From, To>;
 
-/**
- * @brief 获取成员 m 的类型。
- */
-#define DM_MEMBER_TYPE(T, m) decltype(std::declval<T&>().m)
+//-----------------------------------------------------------------------------
+// 类型转换 (Type Modifications)
+//-----------------------------------------------------------------------------
 
-/**
- * @brief 检查类 T 的成员 m 是否为指针类型。
- */
-#define DM_MEMBER_IS_POINTER(T, m) \
-    (DM_MEMBER_HAS(T, m) && std::is_pointer_v<DM_MEMBER_TYPE(T, m)>)
+template<typename T>
+using dm_remove_cv_t = std::remove_cv_t<T>;
+template<typename T>
+using dm_remove_const_t = std::remove_const_t<T>;
+template<typename T>
+using dm_remove_volatile_t = std::remove_volatile_t<T>;
+template<typename T>
+using dm_add_cv_t = std::add_cv_t<T>;
+template<typename T>
+using dm_add_const_t = std::add_const_t<T>;
+template<typename T>
+using dm_add_volatile_t = std::add_volatile_t<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为引用类型。
- */
-#define DM_MEMBER_IS_REFERENCE(T, m) \
-    (DM_MEMBER_HAS(T, m) && std::is_reference_v<DM_MEMBER_TYPE(T, m)>)
+template<typename T>
+using dm_remove_reference_t = std::remove_reference_t<T>;
+template<typename T>
+using dm_add_lvalue_reference_t = std::add_lvalue_reference_t<T>;
+template<typename T>
+using dm_add_rvalue_reference_t = std::add_rvalue_reference_t<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否为数组类型。
- */
-#define DM_MEMBER_IS_ARRAY(T, m) \
-    (DM_MEMBER_HAS(T, m) && std::is_array_v<DM_MEMBER_TYPE(T, m)>)
+template<typename T>
+using dm_decay_t = std::decay_t<T>;
+template<typename T>
+using dm_underlying_type_t = std::underlying_type_t<T>;
 
-/**
- * @brief 检查类 T 的成员 m 是否可调用。
- * @param ...args 可选的调用参数类型列表
- */
-#define DM_MEMBER_IS_CALLABLE(T, m, ...) \
-    []() constexpr { \
-        if constexpr (DM_MEMBER_HAS(T, m)) { \
-            if constexpr (requires(T& t) { t.m(std::declval<__VA_ARGS__>()...); }) { \
-                return true; \
-            } \
-        } \
-        return false; \
-    }()
+//-----------------------------------------------------------------------------
+// C++20 特有功能 (C++20-Specific Features)
+//-----------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+
+// C++20 Type transformations
+template<typename T>
+using dm_remove_cvref_t = std::remove_cvref_t<T>;
+template<typename T>
+using dm_type_identity_t = std::type_identity_t<T>;
+
+// C++20 概念 (Concepts)
+template<typename T, typename U>
+concept dm_same_as = std::same_as<T, U>;
+
+template<typename Derived, typename Base>
+concept dm_derived_from = std::derived_from<Derived, Base>;
+
+template<typename From, typename To>
+concept dm_convertible_to = std::convertible_to<From, To>;
+
+template<typename T>
+concept dm_integral = std::integral<T>;
+
+template<typename T>
+concept dm_signed_integral = std::signed_integral<T>;
+
+template<typename T>
+concept dm_unsigned_integral = std::unsigned_integral<T>;
+
+template<typename T>
+concept dm_floating_point = std::floating_point<T>;
+
+template<typename F, typename... Args>
+concept dm_invocable = std::invocable<F, Args...>;
+
+#endif // __cplusplus >= 202002L
 
 #endif // __DMTYPETRAITS_H_INCLUDE__
