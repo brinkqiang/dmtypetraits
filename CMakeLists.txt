@@ -23,10 +23,9 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 ModuleImportAll("thirdparty")
 
-LibImport("libdmtypetraits" "src/libdmtypetraits")
+InterfaceImport("libdmtypetraits" "src/libdmtypetraits" "")
 
 if(PROJECT_IS_TOP_LEVEL)
-    ExeImport("test" "libdmtypetraits;dmtest")
     ExeImport("examples" "libdmtypetraits")
 endif()
 
