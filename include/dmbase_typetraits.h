@@ -162,6 +162,12 @@ concept dm_floating_point = std::floating_point<T>;
 template<typename F, typename... Args>
 concept dm_invocable = std::invocable<F, Args...>;
 
+#else // C++20 之前的版本 (例如 C++17)
+
+// 为 C++17 手动实现 dm_remove_cvref_t
+template<typename T>
+using dm_remove_cvref_t = dm_remove_cv_t<dm_remove_reference_t<T>>;
+
 #endif // __cplusplus >= 202002L
 
 #endif // __DMBASE_TYPETRAITS_H_INCLUDE__
