@@ -226,18 +226,42 @@ inline constexpr bool dm_is_numeric_v = dm_is_integral_v<T> || dm_is_floating_po
 // 实用工具萃取
 //-----------------------------------------------------------------------------
 
+namespace dm_detail {
+    // 辅助模板，用于安全地检测和提取 ::value_type
+    template <typename T, typename = void>
+    struct element_type_helper { using type = void; };
+
+    template <typename T>
+    struct element_type_helper<T, std::void_t<typename T::value_type>> {
+        using type = typename T::value_type;
+    };
+}
+
+// 主模板通过辅助模板获取类型
 template<typename T>
 struct dm_element_type {
-private:
-    // SFINAE: 如果 T 有 value_type，test 的返回类型就是 T::value_type
-    template<typename U>
-    static typename U::value_type test(typename U::value_type*);
-    // SFINAE: 否则，test 的返回类型是 void
-    template<typename>
-    static void test(...);
-public:
-    // decltype 根据哪个 test 函数匹配成功来推导类型
-    using type = decltype(test<T>(nullptr));
+    using type = typename dm_detail::element_type_helper<T>::type;
+};
+
+// 各种特化版本（这些将优先于主模板被匹配）
+template<typename T>
+struct dm_element_type<T*> {
+    using type = T;
+};
+
+template<typename T>
+struct dm_element_type<T[]> { // 处理未定界数组
+    using type = T;
+};
+
+template<typename T, std::size_t N>
+struct dm_element_type<T[N]> {
+    using type = T;
+};
+
+template<typename T, std::size_t N>
+struct dm_element_type<std::array<T, N>> {
+    using type = T;
 };
 
 template<typename T>
@@ -277,9 +301,25 @@ using dm_remove_all_pointers_t = typename dm_remove_all_pointers<T>::type;
 /**
  * @brief 完全去除类型修饰符 (cv-qualifiers + references + pointers)
  */
-template<typename T>
-using dm_pure_type_t = dm_remove_all_pointers_t<dm_remove_cvref_t<T>>;
+namespace dm_detail {
+    // 使用模板特化来根据条件选择实现
+    template<typename T, typename = void>
+    struct pure_type_impl {
+        // 默认实现：适用于非数组类型（指针、引用、普通类型等）
+        using type = dm_remove_cv_t<dm_remove_all_pointers_t<dm_remove_cvref_t<T>>>;
+    };
 
+    template<typename T>
+    struct pure_type_impl<T, std::enable_if_t<std::is_array_v<std::remove_reference_t<T>>>> {
+        // 数组类型的特化实现
+        // dm_decay_t 会将数组 T[N] 或 T[] 退化为 T*
+        using type = dm_decay_t<T>;
+    };
+} // namespace dm_detail
+
+// 最终的 dm_pure_type_t 通过辅助模板获取类型
+template<typename T>
+using dm_pure_type_t = typename dm_detail::pure_type_impl<T>::type;
 //-----------------------------------------------------------------------------
 // 条件类型选择工具
 //-----------------------------------------------------------------------------
