@@ -1,167 +1,99 @@
 ﻿#ifndef __DMTYPETRAITS_H_INCLUDE__
 #define __DMTYPETRAITS_H_INCLUDE__
 
-#include <type_traits>
-
-// 仅在 C++20 及以上版本中引入 <concepts> 头文件
-#if __cplusplus >= 202002L
-#include <concepts>
-#endif
+#include "dmbase_typetraits.h" // 引入我们定义的基础类型萃取
+#include <string_view> // 用于 dm_is_string_like_v
 
 //-----------------------------------------------------------------------------
-// 类型属性查询 (Type Property Queries)
+// SFINAE 检测工具 (Detection Idiom using std::void_t)
 //-----------------------------------------------------------------------------
+// 这些是构建复合萃取的底层工具
 
-// Primary type categories
-template<typename T>
-inline constexpr bool dm_is_void_v = std::is_void_v<T>;
-template<typename T>
-inline constexpr bool dm_is_null_pointer_v = std::is_null_pointer_v<T>;
-template<typename T>
-inline constexpr bool dm_is_integral_v = std::is_integral_v<T>;
-template<typename T>
-inline constexpr bool dm_is_floating_point_v = std::is_floating_point_v<T>;
-template<typename T>
-inline constexpr bool dm_is_array_v = std::is_array_v<T>;
-template<typename T>
-inline constexpr bool dm_is_enum_v = std::is_enum_v<T>;
-template<typename T>
-inline constexpr bool dm_is_union_v = std::is_union_v<T>;
-template<typename T>
-inline constexpr bool dm_is_class_v = std::is_class_v<T>;
-template<typename T>
-inline constexpr bool dm_is_function_v = std::is_function_v<T>;
-template<typename T>
-inline constexpr bool dm_is_pointer_v = std::is_pointer_v<T>;
-template<typename T>
-inline constexpr bool dm_is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
-template<typename T>
-inline constexpr bool dm_is_rvalue_reference_v = std::is_rvalue_reference_v<T>;
-template<typename T>
-inline constexpr bool dm_is_member_pointer_v = std::is_member_pointer_v<T>;
+namespace dm_detail {
+    // 检测 T 是否有 .begin()
+    template<typename T, typename = void>
+    struct has_begin : std::false_type {};
+    template<typename T>
+    struct has_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type {};
 
-// Composite type categories
-template<typename T>
-inline constexpr bool dm_is_fundamental_v = std::is_fundamental_v<T>;
-template<typename T>
-inline constexpr bool dm_is_arithmetic_v = std::is_arithmetic_v<T>;
-template<typename T>
-inline constexpr bool dm_is_scalar_v = std::is_scalar_v<T>;
-template<typename T>
-inline constexpr bool dm_is_object_v = std::is_object_v<T>;
-template<typename T>
-inline constexpr bool dm_is_compound_v = std::is_compound_v<T>;
-template<typename T>
-inline constexpr bool dm_is_reference_v = std::is_reference_v<T>;
+    // 检测 T 是否有 .end()
+    template<typename T, typename = void>
+    struct has_end : std::false_type {};
+    template<typename T>
+    struct has_end<T, std::void_t<decltype(std::declval<T>().end())>> : std::true_type {};
 
-// Type properties
-template<typename T>
-inline constexpr bool dm_is_const_v = std::is_const_v<T>;
-template<typename T>
-inline constexpr bool dm_is_volatile_v = std::is_volatile_v<T>;
-template<typename T>
-inline constexpr bool dm_is_trivial_v = std::is_trivial_v<T>;
-template<typename T>
-inline constexpr bool dm_is_trivially_copyable_v = std::is_trivially_copyable_v<T>;
-template<typename T>
-inline constexpr bool dm_is_standard_layout_v = std::is_standard_layout_v<T>;
-template<typename T>
-inline constexpr bool dm_is_empty_v = std::is_empty_v<T>;
-template<typename T>
-inline constexpr bool dm_is_polymorphic_v = std::is_polymorphic_v<T>;
-template<typename T>
-inline constexpr bool dm_is_abstract_v = std::is_abstract_v<T>;
-template<typename T>
-inline constexpr bool dm_is_final_v = std::is_final_v<T>;
-template<typename T>
-inline constexpr bool dm_is_aggregate_v = std::is_aggregate_v<T>; // C++17
-template<typename T>
-inline constexpr bool dm_is_signed_v = std::is_signed_v<T>;
-template<typename T>
-inline constexpr bool dm_is_unsigned_v = std::is_unsigned_v<T>;
+    // 检测 T 是否有 .size()
+    template<typename T, typename = void>
+    struct has_size : std::false_type {};
+    template<typename T>
+    struct has_size<T, std::void_t<decltype(std::declval<T>().size())>> : std::true_type {};
+    
+    // 检测 T 是否可解引用 (operator*)
+    template<typename T, typename = void>
+    struct is_dereferenceable : std::false_type {};
+    template<typename T>
+    struct is_dereferenceable<T, std::void_t<decltype(*std::declval<T>())>> : std::true_type {};
 
-// Supported operations
-template<typename T, typename... Args>
-inline constexpr bool dm_is_constructible_v = std::is_constructible_v<T, Args...>;
+    // 检测 T 是否有箭头操作 (operator->)
+    template<typename T, typename = void>
+    struct has_arrow_operator : std::false_type {};
+    template<typename T>
+    struct has_arrow_operator<T, std::void_t<decltype(std::declval<T>().operator->())>> : std::true_type {};
+
+} // namespace dm_detail
+
+// 辅助变量模板
 template<typename T>
-inline constexpr bool dm_is_default_constructible_v = std::is_default_constructible_v<T>;
+inline constexpr bool dm_has_begin_v = dm_detail::has_begin<T>::value;
+template<typename T>
+inline constexpr bool dm_has_end_v = dm_detail::has_end<T>::value;
+template<typename T>
+inline constexpr bool dm_has_size_v = dm_detail::has_size<T>::value;
+template<typename T>
+inline constexpr bool dm_is_dereferenceable_v = dm_detail::is_dereferenceable<T>::value;
+template<typename T>
+inline constexpr bool dm_has_arrow_operator_v = dm_detail::has_arrow_operator<T>::value;
+
 
 //-----------------------------------------------------------------------------
-// 类型关系查询 (Type Relationship Queries)
+// 复合类型萃取 (Composite Type Traits)
 //-----------------------------------------------------------------------------
 
-template<typename T, typename U>
-inline constexpr bool dm_is_same_v = std::is_same_v<T, U>;
-template<typename Base, typename Derived>
-inline constexpr bool dm_is_base_of_v = std::is_base_of_v<Base, Derived>;
-template<typename From, typename To>
-inline constexpr bool dm_is_convertible_v = std::is_convertible_v<From, To>;
+/**
+ * @brief 判断类型 T 是否为容器。
+ *
+ * 简单地认为拥有 .begin(), .end(), 和 .size() 成员函数的即为容器。
+ * 注意：这不包含 C-style 数组。
+ */
+template<typename T>
+inline constexpr bool dm_is_container_v = dm_has_begin_v<T> && dm_has_end_v<T> && dm_has_size_v<T>;
 
-//-----------------------------------------------------------------------------
-// 类型转换 (Type Modifications)
-//-----------------------------------------------------------------------------
 
+/**
+ * @brief 判断类型 T 是否为强类型枚举 (enum class)。
+ *
+ * 通过判断 T 是一个枚举，但不能隐式转换为其底层类型来实现。
+ */
 template<typename T>
-using dm_remove_cv_t = std::remove_cv_t<T>;
-template<typename T>
-using dm_remove_const_t = std::remove_const_t<T>;
-template<typename T>
-using dm_remove_volatile_t = std::remove_volatile_t<T>;
-template<typename T>
-using dm_add_cv_t = std::add_cv_t<T>;
-template<typename T>
-using dm_add_const_t = std::add_const_t<T>;
-template<typename T>
-using dm_add_volatile_t = std::add_volatile_t<T>;
+inline constexpr bool dm_is_scoped_enum_v = dm_is_enum_v<T> && !dm_is_convertible_v<T, dm_underlying_type_t<T>>;
 
+
+/**
+ * @brief 判断类型 T 是否能像字符串一样使用。
+ *
+ * 通过判断 T 能否隐式转换为 std::string_view 来实现。
+ * 这可以匹配 std::string, const char*, std::string_view 等。
+ */
 template<typename T>
-using dm_remove_reference_t = std::remove_reference_t<T>;
+inline constexpr bool dm_is_string_like_v = dm_is_convertible_v<const T&, std::string_view>;
+
+
+/**
+ * @brief 判断类型 T 是否像指针（可解引用，有箭头操作）。
+ *
+ * 适用于裸指针和大部分智能指针。
+ */
 template<typename T>
-using dm_add_lvalue_reference_t = std::add_lvalue_reference_t<T>;
-template<typename T>
-using dm_add_rvalue_reference_t = std::add_rvalue_reference_t<T>;
-
-template<typename T>
-using dm_decay_t = std::decay_t<T>;
-template<typename T>
-using dm_underlying_type_t = std::underlying_type_t<T>;
-
-//-----------------------------------------------------------------------------
-// C++20 特有功能 (C++20-Specific Features)
-//-----------------------------------------------------------------------------
-#if __cplusplus >= 202002L
-
-// C++20 Type transformations
-template<typename T>
-using dm_remove_cvref_t = std::remove_cvref_t<T>;
-template<typename T>
-using dm_type_identity_t = std::type_identity_t<T>;
-
-// C++20 概念 (Concepts)
-template<typename T, typename U>
-concept dm_same_as = std::same_as<T, U>;
-
-template<typename Derived, typename Base>
-concept dm_derived_from = std::derived_from<Derived, Base>;
-
-template<typename From, typename To>
-concept dm_convertible_to = std::convertible_to<From, To>;
-
-template<typename T>
-concept dm_integral = std::integral<T>;
-
-template<typename T>
-concept dm_signed_integral = std::signed_integral<T>;
-
-template<typename T>
-concept dm_unsigned_integral = std::unsigned_integral<T>;
-
-template<typename T>
-concept dm_floating_point = std::floating_point<T>;
-
-template<typename F, typename... Args>
-concept dm_invocable = std::invocable<F, Args...>;
-
-#endif // __cplusplus >= 202002L
+inline constexpr bool dm_is_pointer_like_v = dm_is_dereferenceable_v<T> && (dm_is_pointer_v<T> || dm_has_arrow_operator_v<T>);
 
 #endif // __DMTYPETRAITS_H_INCLUDE__
