@@ -3,7 +3,7 @@
 #include <vector>
 #include <functional>
 #include "dmfix_win.h"
-#include "dmrouter.h"
+#include "dmtypetraits.h"
 #include "dmformat.h"
 
 int main(int argc, char* argv[])

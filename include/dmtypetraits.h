@@ -1,6 +1,6 @@
 ﻿#ifndef __DMTYPETRAITS_H_INCLUDE__
 #define __DMTYPETRAITS_H_INCLUDE__
 
-#include "dmtypetraits_function.h"
+#include "dmrouter.h"
 
 #endif // __DMTYPETRAITS_H_INCLUDE__
