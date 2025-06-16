@@ -45,4 +45,8 @@
 #include "dmtypetraits_function.h"  // 函数萃取
 #include "dmtypetraits_typelist.h"    // 类型列表工具
 
+#if __cplusplus >= 202002L
+#include "dmtypetraits_reflection.h"
+#endif
+
 #endif // __DMTYPETRAITS_H_INCLUDE__
