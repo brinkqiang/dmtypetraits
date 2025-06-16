@@ -18,7 +18,7 @@ struct NonAggregate {
 
 int main() {
     // 1. 获取成员数量
-    std::cout << "Player has " << dm_member_count_v<Player> << " members." << std::endl;
+    std::cout << "Player has " << dm::pack::detail::member_count<Player>() << " members." << std::endl;
 
     // 下面这行会触发编译错误，因为 NonAggregate 不是聚合类型
     // std::cout << "NonAggregate has " << dm_member_count_v<NonAggregate> << " members." << std::endl;
@@ -27,7 +27,7 @@ int main() {
     Player player{ 101, "brink", 99.5 };
 
     std::cout << "\nVisiting members of player:" << std::endl;
-    dm_visit_members(player, [](const auto&... members) {
+    dm::pack::detail::visit_members(player, [](const auto&... members) {
         // C++17 折叠表达式，用于打印所有成员
         auto print_one = [](const auto& member) {
             std::cout << "  - Member value: " << member << " (type: " << typeid(member).name() << ")" << std::endl;
@@ -37,7 +37,7 @@ int main() {
 
     // 3. 修改成员
     std::cout << "\nOriginal score: " << player.score << std::endl;
-    dm_visit_members(player, [](int& id, std::string& name, double& score) {
+    dm::pack::detail::visit_members(player, [](int& id, std::string& name, double& score) {
         // visitor 的参数是引用，可以直接修改
         score = 100.0;
         });
