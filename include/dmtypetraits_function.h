@@ -25,6 +25,7 @@
 #include "dmtypetraits_extensions.h" // 引入我们已定义的扩展类型萃取
 #include <tuple>
 #include <functional>
+
 //-----------------------------------------------------------------------------
 // 函数萃取 (Function Traits)
 //-----------------------------------------------------------------------------
@@ -41,7 +42,8 @@ struct dm_function_traits;
 template <typename R, typename... Args>
 struct dm_function_traits<R(Args...)> {
     using return_type = R;
-    using parameters_type = std::tuple<dm_remove_cvref_t<Args>...>;
+    using parameters_type = std::tuple<dm_remove_cvref_t<Args>...>; // 保留：纯粹类型
+    using raw_parameters_type = std::tuple<Args...>;                  // 新增：原始类型
 };
 
 template <typename R, typename... Args>
@@ -57,7 +59,8 @@ template <typename T, typename R, typename... Args>
 struct dm_function_traits<R (T::*)(Args...)> {
     using return_type = R;
     using class_type = T;
-    using parameters_type = std::tuple<dm_remove_cvref_t<Args>...>;
+    using parameters_type = std::tuple<dm_remove_cvref_t<Args>...>; // 保留：纯粹类型
+    using raw_parameters_type = std::tuple<Args...>;                  // 新增：原始类型
 };
 
 template <typename T, typename R, typename... Args>
@@ -74,7 +77,8 @@ struct dm_function_traits<R (T::*)(Args...) const noexcept> : dm_function_traits
 template <typename R>
 struct dm_function_traits<R()> {
     using return_type = R;
-    using parameters_type = void;
+    using parameters_type = void;     // 保留
+    using raw_parameters_type = void; // 新增
 };
 
 template <typename R>
@@ -96,7 +100,8 @@ template <typename T, typename R>
 struct dm_function_traits<R (T::*)()> {
     using return_type = R;
     using class_type = T;
-    using parameters_type = void;
+    using parameters_type = void;     // 保留
+    using raw_parameters_type = void; // 新增
 };
 
 template <typename T, typename R>
@@ -114,6 +119,54 @@ template <class F>
 struct dm_function_traits : dm_function_traits<decltype(&F::operator())> {};
 
 
+//-----------------------------------------------------------------------------
+// 函数萃取相关的便捷别名
+//-----------------------------------------------------------------------------
+
+/**
+ * @brief 萃取可调用对象的返回类型。
+ */
+template <typename F>
+using dm_function_return_t = typename dm_function_traits<dm_remove_cvref_t<F>>::return_type;
+
+/**
+ * @brief 萃取可调用对象的“纯粹”参数类型元组（已移除CV-Ref）。对于无参函数，类型为 void。
+ */
+template <typename F>
+using dm_function_parameters_t = typename dm_function_traits<dm_remove_cvref_t<F>>::parameters_type;
+
+/**
+ * @brief (新增) 萃取可调用对象的“原始”参数类型元组（保留CV-Ref）。对于无参函数，类型为 void。
+ */
+template <typename F>
+using dm_function_raw_parameters_t = typename dm_function_traits<dm_remove_cvref_t<F>>::raw_parameters_type;
+
+/**
+ * @brief 萃取成员函数所属的类类型。
+ */
+template <typename F>
+using dm_function_class_t = typename dm_function_traits<dm_remove_cvref_t<F>>::class_type;
+
+/**
+ * @brief 萃取可调用对象第 I 个“纯粹”参数的类型。
+ */
+template <size_t I, typename F>
+using dm_function_arg_t = std::tuple_element_t<I, dm_function_parameters_t<F>>;
+
+/**
+ * @brief (新增) 萃取可调用对象第 I 个“原始”参数的类型。
+ */
+template <size_t I, typename F>
+using dm_function_raw_arg_t = std::tuple_element_t<I, dm_function_raw_parameters_t<F>>;
+
+/**
+ * @brief 萃取可调用对象最后一个“纯粹”参数的类型。
+ * @note 如果函数没有参数，此别名将导致编译错误。
+ */
+template <typename F>
+using dm_last_parameter_t =
+    std::tuple_element_t<std::tuple_size_v<dm_function_parameters_t<F>> - 1,
+                         dm_function_parameters_t<F>>;
 //-----------------------------------------------------------------------------
 // 函数萃取相关的便捷别名
 //-----------------------------------------------------------------------------
