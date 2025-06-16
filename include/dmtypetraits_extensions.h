@@ -322,33 +322,6 @@ namespace dm_detail {
 template<typename T>
 using dm_pure_type_t = typename dm_detail::pure_type_impl<T>::type;
 
-//-----------------------------------------------------------------------------
-// 条件类型选择工具
-//-----------------------------------------------------------------------------
-
-/**
- * @brief 根据条件选择类型
- */
-template<bool B, typename T, typename F>
-using dm_conditional_t = std::conditional_t<B, T, F>;
-
-/**
- * @brief 如果类型 T 满足条件 Condition，则返回 T，否则返回 void
- */
-template<template<typename> class Condition, typename T>
-using dm_enable_if_t = std::enable_if_t<Condition<T>::value, T>;
-
-template<typename T, T... Ints>
-using dm_integer_sequence = std::integer_sequence<T, Ints...>;
-
-template<std::size_t... Ints>
-using dm_index_sequence = std::index_sequence<Ints...>;
-
-template<std::size_t N>
-using dm_make_index_sequence = std::make_index_sequence<N>;
-
-template<typename... T>
-using dm_index_sequence_for = std::index_sequence_for<T...>;
 
 
 namespace dm_detail {
