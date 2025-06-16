@@ -1,4 +1,24 @@
-﻿#ifndef __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
+﻿// Copyright (c) 2018 brinkqiang (brink.qiang@gmail.com)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+#ifndef __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 #define __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 
 #include "dmcore_typetraits.h"
@@ -6,6 +26,7 @@
 #include <array>
 #include <string_view>
 #include <functional>
+
 
 //-----------------------------------------------------------------------------
 // 更多 SFINAE 检测工具
@@ -71,16 +92,6 @@ namespace dm_detail {
     template<typename T>
     struct has_find<T, std::void_t<decltype(std::declval<T>().find(std::declval<typename T::key_type>()))>> : std::true_type {};
 
-    // 检测是否可调用 (函数、函数对象、lambda等)
-    template<typename F, typename... Args>
-    struct is_callable_impl {
-        template<typename U>
-        static auto test(int) -> decltype(std::declval<U>()(std::declval<Args>()...), std::true_type{});
-        template<typename>
-        static std::false_type test(...);
-        using type = decltype(test<F>(0));
-    };
-
     // 检测是否为 std::tuple
     template<typename T>
     struct is_tuple : std::false_type {};
@@ -130,8 +141,6 @@ template<typename T>
 inline constexpr bool dm_has_const_iterator_v = dm_detail::has_const_iterator<T>::value;
 template<typename T>
 inline constexpr bool dm_has_find_v = dm_detail::has_find<T>::value;
-template<typename F, typename... Args>
-inline constexpr bool dm_is_callable_v = dm_detail::is_callable_impl<F, Args...>::type::value;
 template<typename T>
 inline constexpr bool dm_is_tuple_v = dm_detail::is_tuple<T>::value;
 template<typename T>
@@ -182,10 +191,15 @@ template<typename T>
 inline constexpr bool dm_is_iterable_v = dm_has_begin_v<T> && dm_has_end_v<T>;
 
 /**
- * @brief 判断类型 T 是否为函数类型或可调用对象
+ * @brief (C++17) 判断类型 F 是否能以参数 Args... 进行调用。
+ *
+ * 这是对 std::is_invocable_v 的封装，提供了统一的 dm_ 前缀。
+ * 它适用于函数、函数对象、lambda 表达式等所有可调用实体。
+ * @example dm_is_invocable_v<void(), int> -> false
+ * @example dm_is_invocable_v<void(int), int> -> true
  */
-template<typename T>
-inline constexpr bool dm_is_invocable_v = dm_is_function_v<T> || dm_is_callable_v<T>;
+template<typename F, typename... Args>
+inline constexpr bool dm_is_invocable_v = std::is_invocable_v<F, Args...>;
 
 /**
  * @brief 判断类型 T 是否为智能指针 (排除裸指针)
@@ -207,14 +221,14 @@ inline constexpr bool dm_is_tuple_like_v = dm_is_tuple_v<T> || dm_is_pair_v<T>;
  * @brief 判断类型 T 是否为有符号整数 (不包括 bool 和 char)
  */
 template<typename T>
-inline constexpr bool dm_is_signed_integer_v = dm_is_integral_v<T> && dm_is_signed_v<T> && 
+inline constexpr bool dm_is_signed_integer_v = dm_is_integral_v<T> && dm_is_signed_v<T> &&
                                                !dm_is_same_v<T, bool> && !dm_is_same_v<T, char>;
 
 /**
  * @brief 判断类型 T 是否为无符号整数 (不包括 bool)
  */
 template<typename T>
-inline constexpr bool dm_is_unsigned_integer_v = dm_is_integral_v<T> && dm_is_unsigned_v<T> && 
+inline constexpr bool dm_is_unsigned_integer_v = dm_is_integral_v<T> && dm_is_unsigned_v<T> &&
                                                  !dm_is_same_v<T, bool>;
 
 /**
@@ -269,30 +283,36 @@ template<typename T>
 using dm_element_type_t = typename dm_element_type<T>::type;
 
 /**
- * @brief 移除所有指针和引用修饰符，获取最终的值类型
+ * @brief 移除所有指针修饰符，获取最终指向的类型。
+ *
+ * @example dm_remove_all_pointers_t<int***>           // int
+ * @example dm_remove_all_pointers_t<const int* const> // const int
  */
 template<typename T>
 struct dm_remove_all_pointers {
     using type = T;
 };
+
 template<typename T>
-struct dm_remove_all_pointers<T*> : dm_remove_all_pointers<dm_remove_cv_t<T>> {}; // 递归移除所有指针层级
+struct dm_remove_all_pointers<T*> {
+    using type = typename dm_remove_all_pointers<dm_remove_cvref_t<T>>::type;
+};
 
 template<typename T>
 using dm_remove_all_pointers_t = typename dm_remove_all_pointers<T>::type;
+
+
 /**
- * @brief 完全去除类型修饰符 (cv-qualifiers + references + pointers)
+ * @brief 完全去除类型修饰符，获取最基础的值类型。
+ *
+ * 行为: 依次进行退化(数组/函数->指针)，再移除所有指针、引用和CV限定符。
+ * @example dm_pure_type_t<const int* const&> // int
+ * @example dm_pure_type_t<char[5]>             // char
+ * @example dm_pure_type_t<const char*[]>       // char
  */
-namespace dm_detail {
-     template<typename T>
-     struct pure_type_impl {
-         using type = dm_remove_cv_t<dm_remove_all_pointers_t<dm_remove_cvref_t<T>>>;
-     };
-}
-//
-// 外部接口先进行 decay
 template<typename T>
-using dm_pure_type_t = typename dm_detail::pure_type_impl<std::decay_t<T>>::type;
+using dm_pure_type_t = dm_remove_cv_t<dm_remove_all_pointers_t<dm_decay_t<T>>>;
+
 
 namespace dm_detail {
     template<typename From, typename To>
