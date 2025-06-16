@@ -4,7 +4,7 @@
 #include <functional>
 #include "dmfix_win.h"
 // 包含我们创建的函数萃取头文件
-#include "dmtypetraits_function.h"
+#include "dmtypetraits.h"
 
 // --- 用于测试的函数和类 ---
 static void free_func_multi_arg(int, const std::string&) {}
