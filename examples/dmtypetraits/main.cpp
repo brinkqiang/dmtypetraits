@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-
+#include "dmfix_win.h"
 // 用于测试的枚举
 enum CStyleEnum { A, B };
 enum class ScopedEnum { X, Y };
