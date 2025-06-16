@@ -321,6 +321,7 @@ namespace dm_detail {
 // 最终的 dm_pure_type_t 通过辅助模板获取类型
 template<typename T>
 using dm_pure_type_t = typename dm_detail::pure_type_impl<T>::type;
+
 //-----------------------------------------------------------------------------
 // 条件类型选择工具
 //-----------------------------------------------------------------------------
@@ -349,6 +350,53 @@ using dm_make_index_sequence = std::make_index_sequence<N>;
 template<typename... T>
 using dm_index_sequence_for = std::index_sequence_for<T...>;
 
+
+namespace dm_detail {
+    template<typename From, typename To>
+    struct copy_cvref_impl {
+    private:
+        // 1. 移除 To 类型的所有 cv 和引用限定符，得到纯净的基础类型
+        using base_to_t = dm_remove_cvref_t<To>;
+        
+        // 2. 为 base_to_t 添加来自 From 的 const 限定符 (如果 From 有的话)
+        using const_applied_t = dm_conditional_t<
+            dm_is_const_v<dm_remove_reference_t<From>>,
+            dm_add_const_t<base_to_t>,
+            base_to_t
+        >;
+
+        // 3. 在上一步的基础上，添加来自 From 的 volatile 限定符 (如果 From 有的话)
+        using cv_applied_t = dm_conditional_t<
+            dm_is_volatile_v<dm_remove_reference_t<From>>,
+            dm_add_volatile_t<const_applied_t>,
+            const_applied_t
+        >;
+
+        // 4. 在上一步的基础上，添加来自 From 的引用类型 (左值或右值)
+        using ref_applied_t = dm_conditional_t<
+            dm_is_lvalue_reference_v<From>,
+            dm_add_lvalue_reference_t<cv_applied_t>,
+            dm_conditional_t<
+                dm_is_rvalue_reference_v<From>,
+                dm_add_rvalue_reference_t<cv_applied_t>,
+                cv_applied_t // 如果 From 不是引用，则最终类型也不是引用
+            >
+        >;
+    public:
+        using type = ref_applied_t;
+    };
+} // namespace dm_detail
+
+/**
+ * @brief 将类型 From 的 cv-qualifiers (const/volatile) 和引用 (&/&&)
+ * 拷贝到类型 To 上。
+ *
+ * @example dm_copy_cvref_t<const int&, float>  // 结果为 const float&
+ * @example dm_copy_cvref_t<int&&, char>         // 结果为 char&&
+ * @example dm_copy_cvref_t<const volatile T, U> // 结果为 const volatile U
+ */
+template<typename From, typename To>
+using dm_copy_cvref_t = typename dm_detail::copy_cvref_impl<From, To>::type;
 
 /**
  * @brief (C++17) 在编译期获取类型的易读名称字符串。
