@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <vector>
 #include <utility>
+#include <variant>
+#include <optional>
 
 #include "dmtypetraits.h" // 主头文件
 
@@ -30,32 +32,26 @@ constexpr uint32_t MAX_SIZE = UINT32_MAX;
 // START: 增强的编译期类型信息系统
 // ===================================================================================
 
-// 扩展后的类型ID枚举，更接近原版实现
+// 扩展后的类型ID枚举
 enum class DmTypeId : char {
-    // 基本类型
     Int8 = 'a', UInt8 = 'b', Int16 = 'c', UInt16 = 'd',
     Int32 = 'e', UInt32 = 'f', Int64 = 'g', UInt64 = 'h',
     Bool = 'i', Char = 'j', Float = 'k', Double = 'l',
     Char16 = 'm', Char32 = 'n',
-
-    // 模板/复杂类型
     Monostate = 'o',
     String = 's', 
     Array = 't', 
     Map = 'u', 
     Set = 'v', 
-    Container = 'w', // vector, list 等泛化容器
+    Container = 'w',
     Optional = 'x', 
     Variant = 'y', 
-    
-    // 结构体标记
     Aggregate = '0', 
     EndAggregate = 'Z',
 };
 
 // --- 编译期辅助工具 ---
 
-// 将一个size_t整数编码为一个8字节的编译期字符串 (类似 struct_pack 的 get_size_literal)
 template <size_t Size>
 consteval auto encode_size_as_literal() {
     static_assert(sizeof(size_t) <= 8);
@@ -67,52 +63,56 @@ consteval auto encode_size_as_literal() {
 
 // --- 增强的类型识别与签名生成 ---
 
-// 前向声明
 template <typename T>
 consteval auto get_type_literal();
 
-// 增强的 get_type_id，识别更具体的类型
 template <typename T>
 consteval DmTypeId get_type_id() {
     using type = dm_remove_cvref_t<T>;
-    // 检查顺序很重要
 
-    // 基本类型
-    if constexpr (std::is_same_v<type, int8_t> || std::is_same_v<type, signed char>) return DmTypeId::Int8;
-    if constexpr (std::is_same_v<type, uint8_t> || std::is_same_v<type, unsigned char>) return DmTypeId::UInt8;
-    if constexpr (std::is_same_v<type, int16_t>) return DmTypeId::Int16;
-    if constexpr (std::is_same_v<type, uint16_t>) return DmTypeId::UInt16;
-    if constexpr (std::is_same_v<type, int32_t>) return DmTypeId::Int32;
-    if constexpr (std::is_same_v<type, uint32_t>) return DmTypeId::UInt32;
-    if constexpr (std::is_same_v<type, int64_t> || (sizeof(long long) == 8 && std::is_same_v<type, long long>)) return DmTypeId::Int64;
-    if constexpr (std::is_same_v<type, uint64_t> || (sizeof(unsigned long long) == 8 && std::is_same_v<type, unsigned long long>)) return DmTypeId::UInt64;
-    if constexpr (std::is_same_v<type, bool>) return DmTypeId::Bool;
-    if constexpr (std::is_same_v<type, char> || std::is_same_v<type, char8_t>) return DmTypeId::Char;
-    if constexpr (std::is_same_v<type, char16_t>) return DmTypeId::Char16;
-    if constexpr (std::is_same_v<type, char32_t>) return DmTypeId::Char32;
-    if constexpr (std::is_same_v<type, float>) return DmTypeId::Float;
-    if constexpr (std::is_same_v<type, double>) return DmTypeId::Double;
-
-    // 空状态
-    if constexpr (dm_is_monostate_v<type>) return DmTypeId::Monostate;
-
-    // 复杂类型
-    if constexpr (dm_is_optional_v<type>) return DmTypeId::Optional;
-    if constexpr (dm_is_variant_v<type>) return DmTypeId::Variant;
-    if constexpr (dm_is_string_like_v<type>) return DmTypeId::String;
-    if constexpr (dm_is_array_v<type> || dm_is_c_array_v<type>) return DmTypeId::Array;
-    if constexpr (dm_is_map_v<type>) return DmTypeId::Map;
-    if constexpr (dm_is_set_v<type>) return DmTypeId::Set;
-    if constexpr (dm_is_container_v<type>) return DmTypeId::Container; // vector, list等
-    
-    // 聚合类型
-    if constexpr (std::is_aggregate_v<type> || dm_is_pair_v<type> || dm_is_tuple_v<type>) return DmTypeId::Aggregate;
-
-    static_assert(!sizeof(type), "Unsupported type for serialization.");
-    return DmTypeId{};
+    if constexpr (std::is_enum_v<type>) {
+        return get_type_id<std::underlying_type_t<type>>();
+    }
+    else if constexpr (std::is_same_v<type, int8_t> || std::is_same_v<type, signed char>) return DmTypeId::Int8;
+    else if constexpr (std::is_same_v<type, uint8_t> || std::is_same_v<type, unsigned char>) return DmTypeId::UInt8;
+    else if constexpr (std::is_same_v<type, int16_t>) return DmTypeId::Int16;
+    else if constexpr (std::is_same_v<type, uint16_t>) return DmTypeId::UInt16;
+    else if constexpr (std::is_same_v<type, int32_t>) return DmTypeId::Int32;
+    else if constexpr (std::is_same_v<type, uint32_t>) return DmTypeId::UInt32;
+    else if constexpr (std::is_same_v<type, int64_t> || (sizeof(long long) == 8 && std::is_same_v<type, long long>)) return DmTypeId::Int64;
+    else if constexpr (std::is_same_v<type, uint64_t> || (sizeof(unsigned long long) == 8 && std::is_same_v<type, unsigned long long>)) return DmTypeId::UInt64;
+    else if constexpr (std::is_same_v<type, bool>) return DmTypeId::Bool;
+    else if constexpr (std::is_same_v<type, char> || std::is_same_v<type, char8_t>) return DmTypeId::Char;
+    else if constexpr (std::is_same_v<type, char16_t>) return DmTypeId::Char16;
+    else if constexpr (std::is_same_v<type, char32_t>) return DmTypeId::Char32;
+    else if constexpr (std::is_same_v<type, float>) return DmTypeId::Float;
+    else if constexpr (std::is_same_v<type, double>) return DmTypeId::Double;
+    else if constexpr (dm_is_monostate_v<type>) return DmTypeId::Monostate;
+    else if constexpr (dm_is_string_like_v<type>) return DmTypeId::String;
+    else if constexpr (dm_is_any_array_v<type>) return DmTypeId::Array;
+    else if constexpr (dm_is_map_v<type>) return DmTypeId::Map;
+    else if constexpr (dm_is_set_v<type>) return DmTypeId::Set;
+    else if constexpr (dm_is_optional_v<type>) return DmTypeId::Optional;
+    else if constexpr (dm_is_variant_v<type>) {
+        static_assert(std::variant_size_v<type> > 0, "The variant should contain at least one type!");
+        static_assert(std::variant_size_v<type> < 256, "The variant is too complex!");
+        return DmTypeId::Variant;
+    }
+    // 注意: container 检查必须在 optional, variant, string 等更特殊的容器之后
+    else if constexpr (dm_is_container_v<type>) return DmTypeId::Container;
+    else if constexpr (dm_is_tuple_v<type> || dm_is_pair_v<type>) {
+        return DmTypeId::Aggregate;
+    }
+    else if constexpr (std::is_class_v<type>) {
+        static_assert(std::is_aggregate_v<type>, "Only aggregate class types are supported for serialization.");
+        return DmTypeId::Aggregate;
+    }
+    else {
+        static_assert(!sizeof(type), "Unsupported type for serialization.");
+        return DmTypeId{};
+    }
 }
 
-// 辅助函数，用于获取聚合体所有成员的类型字面量
 template <typename... Members>
 consteval auto get_members_literal() {
     if constexpr (sizeof...(Members) == 0) {
@@ -122,7 +122,6 @@ consteval auto get_members_literal() {
     }
 }
 
-// 增强的 get_type_literal, 处理更丰富的类型
 template <typename T>
 consteval auto get_type_literal() {
     using type = dm_remove_cvref_t<T>;
@@ -133,31 +132,29 @@ consteval auto get_type_literal() {
     constexpr auto end_literal = dm::md5_detail::DmStringLiteral(end_char_array);
 
     if constexpr (id == DmTypeId::Aggregate) {
-        return dm_visit_members(type{}, []<typename... Members>() {
-            return ret + get_members_literal<Members...>() + end_literal;
-        });
+        auto visitor = [&](auto&&... members) {
+            return ret + get_members_literal<dm_remove_cvref_t<decltype(members)>...>() + end_literal;
+        };
+        return dm_visit_members(type{}, visitor);
     } else if constexpr (id == DmTypeId::Variant) {
         return dm_visit_variant(type{}, []<typename... Alternatives>() {
              return ret + (get_type_literal<Alternatives>() + ...) + end_literal;
         });
     } else if constexpr (id == DmTypeId::Array) {
-        // 签名中包含元素类型和数组大小
         constexpr auto size_literal = encode_size_as_literal<dm_get_array_size_v<type>>();
-        return ret + get_type_literal<dm_get_element_type_t<type>>() + size_literal;
+        return ret + get_type_literal<dm_element_type_t<type>>() + size_literal;
     } else if constexpr (id == DmTypeId::Map) {
-        // 签名中包含key类型和value类型
         return ret + get_type_literal<typename type::key_type>() + get_type_literal<typename type::mapped_type>();
     } else if constexpr (id == DmTypeId::Optional || id == DmTypeId::String || id == DmTypeId::Set || id == DmTypeId::Container) {
-        // 这些都只包含一个子类型
+        // 这些容器都只有一个 value_type
         return ret + get_type_literal<typename type::value_type>();
     }
     else {
-        // 基本类型和 Monostate 直接返回自己的ID
+        // 基础类型, Monostate 等
         return ret;
     }
 }
 
-// 主函数，为一组类型生成最终的32位类型哈希码
 template <typename... Args>
 consteval uint32_t get_types_code() {
     constexpr auto final_literal = (get_type_literal<Args>() + ...);
@@ -168,113 +165,147 @@ consteval uint32_t get_types_code() {
 // END: 增强的编译期类型信息系统
 // ===================================================================================
 
-
-// calculate_needed_size 和 DmPacker/DmUnpacker 的实现基本保持不变，
-// 因为它们依赖的底层 `get_types_code` 和类型萃取已经变得更加强大和精确。
-// 这里为了完整性，再次列出。
-
+// 前向声明
 template <typename T, typename... Args>
-constexpr std::size_t calculate_needed_size(const T& item, const Args&... items);
+constexpr size_t calculate_needed_size(const T& item, const Args&... items);
 
-constexpr std::size_t calculate_needed_size() { return 0; }
+// 递归基例
+constexpr size_t calculate_needed_size() { return 0; }
 
-template <typename T>
-constexpr std::size_t calculate_one_size(const T& item) {
+// 计算大小的主递归函数
+template <typename T, typename... Args>
+constexpr size_t calculate_needed_size(const T& item, const Args&... items) {
     using type = dm_remove_cvref_t<T>;
     static_assert(!std::is_pointer_v<type>, "Raw pointers cannot be serialized.");
-    std::size_t total = 0;
+    size_t current_size = 0;
 
     if constexpr (std::is_fundamental_v<type> || std::is_enum_v<type>) {
-        total += sizeof(type);
+        current_size = sizeof(type);
     } else if constexpr (dm_is_string_like_v<type>) {
-        total += sizeof(size_type) + item.size();
+        current_size = sizeof(size_type) + item.size();
+    } else if constexpr (dm_is_optional_v<type>) {
+        current_size = sizeof(bool); // for has_value flag
+        if (item.has_value()) {
+            current_size += calculate_needed_size(*item);
+        }
+    } else if constexpr (dm_is_variant_v<type>) {
+        current_size = sizeof(uint8_t); // for active index
+        current_size += std::visit([](const auto& value) {
+            return calculate_needed_size(value);
+        }, item);
     } else if constexpr (dm_is_container_v<type> && !dm_is_string_like_v<type>) {
-        total += sizeof(size_type);
+        current_size = sizeof(size_type); // for container size
         if constexpr (std::is_trivially_copyable_v<typename type::value_type>) {
-            total += item.size() * sizeof(typename type::value_type);
+            current_size += item.size() * sizeof(typename type::value_type);
         } else {
             for (const auto& i : item) {
-                total += calculate_one_size(i);
+                current_size += calculate_needed_size(i);
             }
         }
-    } else if constexpr (std::is_aggregate_v<type>) {
+    } else if constexpr (get_type_id<type>() == DmTypeId::Aggregate) {
         dm_visit_members(item, [&](const auto&... members) {
-            total += calculate_needed_size(members...);
+            current_size += calculate_needed_size(members...);
         });
     } else {
         static_assert(!sizeof(type), "This type is not supported for serialization.");
     }
-    return total;
+    
+    return current_size + calculate_needed_size(items...);
 }
 
-template <typename T, typename... Args>
-constexpr std::size_t calculate_needed_size(const T& item, const Args&... items) {
-    return calculate_one_size(item) + calculate_needed_size(items...);
+// 通过索引访问 variant 的辅助函数
+template<typename Variant, typename F>
+bool visit_variant_at(size_t index, Variant& var, F&& func) {
+    constexpr size_t n = std::variant_size_v<Variant>;
+    bool result = false;
+    // 使用折叠表达式和 lambda 在给定的索引处执行正确的 emplace 和函数调用
+    ([&]<size_t... I>(std::index_sequence<I...>) {
+        ( (I == index ? (var.template emplace<I>(), result = func(std::get<I>(var)), true) : false) || ... );
+    }(std::make_index_sequence<n>{}));
+    return result;
 }
+
 
 } // namespace pack_detail
 
 class DmPacker {
 public:
-    DmPacker(char* buffer, size_t capacity) : buffer_(buffer), capacity_(capacity) {}
+    DmPacker(char* buffer, size_t capacity) : buffer_(buffer), capacity_(capacity), pos_(0) {}
 
     template <typename... Args>
     bool serialize(const Args&... args) {
         constexpr uint32_t type_code = pack_detail::get_types_code<Args...>();
         
         size_t needed_size = sizeof(type_code) + pack_detail::calculate_needed_size(args...);
-        if (pos_ + needed_size > capacity_) {
+        if (needed_size > capacity_) {
             return false;
         }
 
-        write(&type_code, sizeof(type_code));
-        (serialize_one(args), ...);
-        return true;
+        if (!write(&type_code, sizeof(type_code))) return false;
+        return (serialize_one(args) && ...);
     }
 
     size_t get_size() const { return pos_; }
 
 private:
-    void write(const void* data, size_t size) {
+    bool write(const void* data, size_t size) {
+        if (pos_ + size > capacity_) return false;
         std::memcpy(buffer_ + pos_, data, size);
         pos_ += size;
+        return true;
     }
 
     template <typename T>
-    void serialize_one(const T& item) {
+    bool serialize_one(const T& item) {
         using type = dm_remove_cvref_t<T>;
         if constexpr (std::is_fundamental_v<type> || std::is_enum_v<type>) {
-            write(&item, sizeof(item));
+            return write(&item, sizeof(item));
         } else if constexpr (dm_is_string_like_v<type>) {
             pack_detail::size_type size = item.size();
-            write(&size, sizeof(size));
-            write(item.data(), size);
-        } else if constexpr (dm_is_container_v<type>) {
+            if (!write(&size, sizeof(size))) return false;
+            return write(item.data(), size);
+        } else if constexpr (dm_is_optional_v<type>) {
+            bool has_value = item.has_value();
+            if (!write(&has_value, sizeof(has_value))) return false;
+            if (has_value) {
+                return serialize_one(*item);
+            }
+            return true;
+        } else if constexpr (dm_is_variant_v<type>) {
+            uint8_t index = item.index();
+            if(!write(&index, sizeof(index))) return false;
+            return std::visit([this](const auto& value){
+                return this->serialize_one(value);
+            }, item);
+        } else if constexpr (dm_is_container_v<type> && !dm_is_string_like_v<type>) {
             pack_detail::size_type size = item.size();
-            write(&size, sizeof(size));
+            if (!write(&size, sizeof(size))) return false;
             if constexpr (std::is_trivially_copyable_v<typename type::value_type>) {
-                write(item.data(), size * sizeof(typename type::value_type));
+                return write(item.data(), size * sizeof(typename type::value_type));
             } else {
                 for (const auto& i : item) {
-                    serialize_one(i);
+                    if (!serialize_one(i)) return false;
                 }
             }
-        } else if constexpr (std::is_aggregate_v<type>) {
-            dm_visit_members(item, [this](const auto&... members) {
-                (this->serialize_one(members), ...);
+        } else if constexpr (pack_detail::get_type_id<type>() == pack_detail::DmTypeId::Aggregate) {
+            bool success = true;
+            dm_visit_members(item, [this, &success](const auto&... members) {
+                success = (... && this->serialize_one(members));
             });
+            return success;
         }
+        return true;
     }
 
     char* buffer_;
     size_t capacity_;
-    size_t pos_ = 0;
+    size_t pos_;
 };
 
 
 class DmUnpacker {
 public:
-    DmUnpacker(const char* buffer, size_t size) : buffer_(buffer), size_(size) {}
+    DmUnpacker(const char* buffer, size_t size) : buffer_(buffer), size_(size), pos_(0) {}
 
     template <typename... Args>
     bool deserialize(Args&... args) {
@@ -307,8 +338,25 @@ private:
             if (!read(&size, sizeof(size))) return false;
             if (pos_ + size > size_) return false;
             item.resize(size);
-            return read(&item[0], size);
-        } else if constexpr (dm_is_container_v<type>) {
+            return read(item.data(), size);
+        } else if constexpr (dm_is_optional_v<type>) {
+            bool has_value;
+            if (!read(&has_value, sizeof(has_value))) return false;
+            if (has_value) {
+                item.emplace();
+                return deserialize_one(*item);
+            } else {
+                item.reset();
+            }
+            return true;
+        } else if constexpr (dm_is_variant_v<type>) {
+            uint8_t index;
+            if (!read(&index, sizeof(index))) return false;
+            if (index >= std::variant_size_v<type>) return false;
+            return pack_detail::visit_variant_at(index, item, [this](auto& value) {
+                return this->deserialize_one(value);
+            });
+        } else if constexpr (dm_is_container_v<type> && !dm_is_string_like_v<type>) {
             pack_detail::size_type size;
             if (!read(&size, sizeof(size))) return false;
             item.resize(size);
@@ -318,21 +366,20 @@ private:
                 for (auto& i : item) {
                     if (!deserialize_one(i)) return false;
                 }
-                return true;
             }
-        } else if constexpr (std::is_aggregate_v<type>) {
+        } else if constexpr (pack_detail::get_type_id<type>() == pack_detail::DmTypeId::Aggregate) {
             bool result = true;
             dm_visit_members(item, [&](auto&... members) {
                 result = ((this->deserialize_one(members)) && ...);
             });
             return result;
         }
-        return false;
+        return true;
     }
 
     const char* buffer_;
     size_t size_;
-    size_t pos_ = 0;
+    size_t pos_;
 };
 
 } // namespace dm

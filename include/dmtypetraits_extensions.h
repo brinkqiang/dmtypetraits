@@ -26,7 +26,8 @@
 #include <array>
 #include <string_view>
 #include <functional>
-
+#include <optional>
+#include <variant>
 
 //-----------------------------------------------------------------------------
 // 更多 SFINAE 检测工具
@@ -72,7 +73,7 @@ namespace dm_detail {
     template<typename T, typename = void>
     struct has_mapped_type : std::false_type {};
     template<typename T>
-    struct has_mapped_type<T, std::void_t<typename T::mapped_type>> : std::true_type {};
+    struct has_mapped_type<T, std::void_t<decltype(std::declval<T>().mapped_type())>> : std::true_type {};
 
     // 检测 T 是否有 iterator 成员类型
     template<typename T, typename = void>
@@ -117,38 +118,36 @@ namespace dm_detail {
     struct is_c_array<T[]> : std::true_type {};
     template<typename T, std::size_t N>
     struct is_c_array<T[N]> : std::true_type {};
+    
+    // 检测是否为 std::optional
+    template<typename T> struct is_optional : std::false_type {};
+    template<typename T> struct is_optional<std::optional<T>> : std::true_type {};
+
+    // 检测是否为 std::variant
+    template<typename T> struct is_variant : std::false_type {};
+    template<typename... Ts> struct is_variant<std::variant<Ts...>> : std::true_type {};
 
 } // namespace dm_detail
 
 // 辅助变量模板
-template<typename T>
-inline constexpr bool dm_has_empty_v = dm_detail::has_empty<T>::value;
-template<typename T>
-inline constexpr bool dm_has_clear_v = dm_detail::has_clear<T>::value;
-template<typename T>
-inline constexpr bool dm_has_push_back_v = dm_detail::has_push_back<T>::value;
-template<typename T>
-inline constexpr bool dm_has_emplace_back_v = dm_detail::has_emplace_back<T>::value;
-template<typename T>
-inline constexpr bool dm_has_value_type_v = dm_detail::has_value_type<T>::value;
-template<typename T>
-inline constexpr bool dm_has_key_type_v = dm_detail::has_key_type<T>::value;
-template<typename T>
-inline constexpr bool dm_has_mapped_type_v = dm_detail::has_mapped_type<T>::value;
-template<typename T>
-inline constexpr bool dm_has_iterator_v = dm_detail::has_iterator<T>::value;
-template<typename T>
-inline constexpr bool dm_has_const_iterator_v = dm_detail::has_const_iterator<T>::value;
-template<typename T>
-inline constexpr bool dm_has_find_v = dm_detail::has_find<T>::value;
-template<typename T>
-inline constexpr bool dm_is_tuple_v = dm_detail::is_tuple<T>::value;
-template<typename T>
-inline constexpr bool dm_is_pair_v = dm_detail::is_pair<T>::value;
-template<typename T>
-inline constexpr bool dm_is_std_array_v = dm_detail::is_std_array<T>::value;
-template<typename T>
-inline constexpr bool dm_is_c_array_v = dm_detail::is_c_array<T>::value;
+template<typename T> inline constexpr bool dm_has_empty_v = dm_detail::has_empty<T>::value;
+template<typename T> inline constexpr bool dm_has_clear_v = dm_detail::has_clear<T>::value;
+template<typename T> inline constexpr bool dm_has_push_back_v = dm_detail::has_push_back<T>::value;
+template<typename T> inline constexpr bool dm_has_emplace_back_v = dm_detail::has_emplace_back<T>::value;
+template<typename T> inline constexpr bool dm_has_value_type_v = dm_detail::has_value_type<T>::value;
+template<typename T> inline constexpr bool dm_has_key_type_v = dm_detail::has_key_type<T>::value;
+template<typename T> inline constexpr bool dm_has_mapped_type_v = dm_detail::has_mapped_type<T>::value;
+template<typename T> inline constexpr bool dm_has_iterator_v = dm_detail::has_iterator<T>::value;
+template<typename T> inline constexpr bool dm_has_const_iterator_v = dm_detail::has_const_iterator<T>::value;
+template<typename T> inline constexpr bool dm_has_find_v = dm_detail::has_find<T>::value;
+template<typename T> inline constexpr bool dm_is_tuple_v = dm_detail::is_tuple<T>::value;
+template<typename T> inline constexpr bool dm_is_pair_v = dm_detail::is_pair<T>::value;
+template<typename T> inline constexpr bool dm_is_std_array_v = dm_detail::is_std_array<T>::value;
+template<typename T> inline constexpr bool dm_is_c_array_v = dm_detail::is_c_array<T>::value;
+template<typename T> inline constexpr bool dm_is_optional_v = dm_detail::is_optional<dm_remove_cvref_t<T>>::value;
+template<typename T> inline constexpr bool dm_is_variant_v = dm_detail::is_variant<dm_remove_cvref_t<T>>::value;
+template<typename T> inline constexpr bool dm_is_monostate_v = std::is_same_v<dm_remove_cvref_t<T>, std::monostate>;
+
 
 //-----------------------------------------------------------------------------
 // 更复杂的复合类型萃取
@@ -179,6 +178,18 @@ template<typename T>
 inline constexpr bool dm_is_set_container_v = dm_is_associative_container_v<T> && !dm_has_mapped_type_v<T>;
 
 /**
+ * @brief (别名) 判断类型 T 是否为映射容器
+ */
+template<typename T>
+inline constexpr bool dm_is_map_v = dm_is_map_container_v<T>;
+
+/**
+ * @brief (别名) 判断类型 T 是否为集合容器
+ */
+template<typename T>
+inline constexpr bool dm_is_set_v = dm_is_set_container_v<T>;
+
+/**
  * @brief 判断类型 T 是否为任意形式的数组 (C数组 或 std::array)
  */
 template<typename T>
@@ -192,11 +203,6 @@ inline constexpr bool dm_is_iterable_v = dm_has_begin_v<T> && dm_has_end_v<T>;
 
 /**
  * @brief (C++17) 判断类型 F 是否能以参数 Args... 进行调用。
- *
- * 这是对 std::is_invocable_v 的封装，提供了统一的 dm_ 前缀。
- * 它适用于函数、函数对象、lambda 表达式等所有可调用实体。
- * @example dm_is_invocable_v<void(), int> -> false
- * @example dm_is_invocable_v<void(int), int> -> true
  */
 template<typename F, typename... Args>
 inline constexpr bool dm_is_invocable_v = std::is_invocable_v<F, Args...>;
@@ -240,7 +246,6 @@ inline constexpr bool dm_is_numeric_v = dm_is_integral_v<T> || dm_is_floating_po
 //-----------------------------------------------------------------------------
 // 实用工具萃取
 //-----------------------------------------------------------------------------
-
 namespace dm_detail {
     // 辅助模板，用于安全地检测和提取 ::value_type
     template <typename T, typename = void>
@@ -252,64 +257,34 @@ namespace dm_detail {
     };
 }
 
-// 主模板通过辅助模板获取类型
-template<typename T>
-struct dm_element_type {
+template<typename T> struct dm_element_type {
     using type = typename dm_detail::element_type_helper<T>::type;
 };
+template<typename T> struct dm_element_type<T*> { using type = T; };
+template<typename T> struct dm_element_type<T[]> { using type = T; };
+template<typename T, std::size_t N> struct dm_element_type<T[N]> { using type = T; };
+template<typename T, std::size_t N> struct dm_element_type<std::array<T, N>> { using type = T; };
+template<typename T> using dm_element_type_t = typename dm_element_type<T>::type;
 
-// 各种特化版本（这些将优先于主模板被匹配）
+
 template<typename T>
-struct dm_element_type<T*> {
-    using type = T;
-};
-
-template<typename T>
-struct dm_element_type<T[]> { // 处理未定界数组
-    using type = T;
-};
-
+struct dm_get_array_size : std::integral_constant<size_t, 0> {};
 template<typename T, std::size_t N>
-struct dm_element_type<T[N]> {
-    using type = T;
-};
-
+struct dm_get_array_size<T[N]> : std::integral_constant<size_t, N> {};
 template<typename T, std::size_t N>
-struct dm_element_type<std::array<T, N>> {
-    using type = T;
-};
-
+struct dm_get_array_size<std::array<T, N>> : std::integral_constant<size_t, N> {};
 template<typename T>
-using dm_element_type_t = typename dm_element_type<T>::type;
+inline constexpr size_t dm_get_array_size_v = dm_get_array_size<dm_remove_cvref_t<T>>::value;
 
-/**
- * @brief 移除所有指针修饰符，获取最终指向的类型。
- *
- * @example dm_remove_all_pointers_t<int***>           // int
- * @example dm_remove_all_pointers_t<const int* const> // const int
- */
-template<typename T>
-struct dm_remove_all_pointers {
-    using type = T;
-};
 
-template<typename T>
-struct dm_remove_all_pointers<T*> {
+template<typename T> struct dm_remove_all_pointers { using type = T; };
+template<typename T> struct dm_remove_all_pointers<T*> {
     using type = typename dm_remove_all_pointers<dm_remove_cvref_t<T>>::type;
 };
-
 template<typename T>
 using dm_remove_all_pointers_t = typename dm_remove_all_pointers<T>::type;
 
 
-/**
- * @brief 完全去除类型修饰符，获取最基础的值类型。
- *
- * 行为: 依次进行退化(数组/函数->指针)，再移除所有指针、引用和CV限定符。
- * @example dm_pure_type_t<const int* const&> // int
- * @example dm_pure_type_t<char[5]>             // char
- * @example dm_pure_type_t<const char*[]>       // char
- */
 template<typename T>
 using dm_pure_type_t = dm_remove_cv_t<dm_remove_all_pointers_t<dm_decay_t<T>>>;
 
@@ -318,60 +293,47 @@ namespace dm_detail {
     template<typename From, typename To>
     struct copy_cvref_impl {
     private:
-        // 1. 移除 To 类型的所有 cv 和引用限定符，得到纯净的基础类型
         using base_to_t = dm_remove_cvref_t<To>;
-        
-        // 2. 为 base_to_t 添加来自 From 的 const 限定符 (如果 From 有的话)
-        using const_applied_t = dm_conditional_t<
-            dm_is_const_v<dm_remove_reference_t<From>>,
-            dm_add_const_t<base_to_t>,
-            base_to_t
-        >;
-
-        // 3. 在上一步的基础上，添加来自 From 的 volatile 限定符 (如果 From 有的话)
-        using cv_applied_t = dm_conditional_t<
-            dm_is_volatile_v<dm_remove_reference_t<From>>,
-            dm_add_volatile_t<const_applied_t>,
-            const_applied_t
-        >;
-
-        // 4. 在上一步的基础上，添加来自 From 的引用类型 (左值或右值)
-        using ref_applied_t = dm_conditional_t<
-            dm_is_lvalue_reference_v<From>,
-            dm_add_lvalue_reference_t<cv_applied_t>,
-            dm_conditional_t<
-                dm_is_rvalue_reference_v<From>,
-                dm_add_rvalue_reference_t<cv_applied_t>,
-                cv_applied_t // 如果 From 不是引用，则最终类型也不是引用
-            >
-        >;
+        using const_applied_t = dm_conditional_t<dm_is_const_v<dm_remove_reference_t<From>>, dm_add_const_t<base_to_t>, base_to_t>;
+        using cv_applied_t = dm_conditional_t<dm_is_volatile_v<dm_remove_reference_t<From>>, dm_add_volatile_t<const_applied_t>, const_applied_t>;
+        using ref_applied_t = dm_conditional_t<dm_is_lvalue_reference_v<From>, dm_add_lvalue_reference_t<cv_applied_t>,
+            dm_conditional_t<dm_is_rvalue_reference_v<From>, dm_add_rvalue_reference_t<cv_applied_t>, cv_applied_t>>;
     public:
         using type = ref_applied_t;
     };
-} // namespace dm_detail
+
+    template<typename Variant, typename Visitor>
+    struct variant_helper;
+
+    template<template<typename...> class V, typename... Ts, typename Visitor>
+    struct variant_helper<V<Ts...>, Visitor> {
+        static constexpr decltype(auto) visit(Visitor&& visitor) {
+            return visitor.template operator()<Ts...>();
+        }
+    };
+} 
 
 /**
- * @brief 将类型 From 的 cv-qualifiers (const/volatile) 和引用 (&/&&)
- * 拷贝到类型 To 上。
- *
- * @example dm_copy_cvref_t<const int&, float>  // 结果为 const float&
- * @example dm_copy_cvref_t<int&&, char>         // 结果为 char&&
- * @example dm_copy_cvref_t<const volatile T, U> // 结果为 const volatile U
+ * @brief 将类型 From 的 cv-qualifiers 和引用拷贝到类型 To 上。
  */
 template<typename From, typename To>
 using dm_copy_cvref_t = typename dm_detail::copy_cvref_impl<From, To>::type;
 
 /**
+ * @brief 访问一个 std::variant 的所有备选类型。
+ */
+template <typename Variant, typename Visitor>
+constexpr decltype(auto) dm_visit_variant(Variant&&, Visitor&& visitor) {
+    return dm_detail::variant_helper<dm_remove_cvref_t<Variant>, Visitor>::visit(std::forward<Visitor>(visitor));
+}
+
+
+/**
  * @brief (C++17) 在编译期获取类型的易读名称字符串。
- *
- * 这是一个依赖于编译器内置宏的调试工具。
- * @tparam T 要获取名称的类型。
- * @return 包含类型名称的 std::string_view。
  */
 template<typename T>
 constexpr std::string_view dm_type_name() {
 #if defined(__clang__)
-    // Clang: "std::string_view dm_type_name() [T = int]"
     constexpr std::string_view prefix = "[T = ";
     constexpr std::string_view suffix = "]";
     constexpr std::string_view function = __PRETTY_FUNCTION__;
@@ -379,7 +341,6 @@ constexpr std::string_view dm_type_name() {
     const auto end = function.rfind(suffix);
     return function.substr(start, (end - start));
 #elif defined(__GNUC__)
-    // GCC: "constexpr std::string_view dm_type_name() [with T = int]"
     constexpr std::string_view prefix = "[with T = ";
     constexpr std::string_view suffix = "]";
     constexpr std::string_view function = __PRETTY_FUNCTION__;
@@ -387,7 +348,6 @@ constexpr std::string_view dm_type_name() {
     const auto end = function.rfind(suffix);
     return function.substr(start, (end - start));
 #elif defined(_MSC_VER)
-    // MSVC: "auto __cdecl dm_type_name<int>(void)"
     constexpr std::string_view prefix = "dm_type_name<";
     constexpr std::string_view suffix = ">(void)";
     constexpr std::string_view function = __FUNCSIG__;
