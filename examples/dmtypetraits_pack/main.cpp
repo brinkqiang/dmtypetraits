@@ -1,4 +1,7 @@
-﻿#include "dmtypetraits.h" // 唯一需要包含的头文件
+﻿
+#if __cplusplus >= 202002L
+
+#include "dmtypetraits.h" // 唯一需要包含的头文件
 #include <iostream>
 #include <string>
 #include <vector>
@@ -113,3 +116,9 @@ int main() {
     
     return 0;
 }
+
+#else
+int main() {
+    return 0;
+}
+#endif

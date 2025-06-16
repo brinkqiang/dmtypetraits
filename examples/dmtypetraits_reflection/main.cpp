@@ -1,3 +1,6 @@
+
+#if __cplusplus >= 202002L
+
 #include "dmtypetraits.h"
 #include <iostream>
 #include <string>
@@ -45,3 +48,9 @@ int main() {
 
     return 0;
 }
+
+#else
+int main() {
+    return 0;
+}
+#endif
