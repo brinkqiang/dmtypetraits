@@ -10,7 +10,7 @@
 #include "dmformat.h"
 // --- 测试用的辅助类型和函数 ---
 struct MyClass {
-    void member_func(int) const {}
+    void member_func(const int&) const {}
     int member_var;
 };
 
@@ -134,10 +134,14 @@ TEST(DmFunctionTypeTraitsTest, FunctionTraits) {
     static_assert(dm_is_same_v<member_func_clean_params, std::tuple<int>>, "Test Failed");
 
     using member_func_raw_params = dm_function_raw_parameters_t<decltype(&MyClass::member_func)>;
-    static_assert(dm_is_same_v<member_func_raw_params, std::tuple<int>>, "Test Failed"); // int没有cv-ref，所以两者相同
+    static_assert(dm_is_same_v<member_func_raw_params, std::tuple<const int&>>, "Test Failed"); // int没有cv-ref，所以两者相同
 
     // 类类型萃取
     static_assert(dm_is_same_v<dm_function_class_t<decltype(&MyClass::member_func)>, MyClass>, "Test Failed");
+
+    fmt::print("{}\n", dm_type_name<clean_params>());
+    fmt::print("{}\n", dm_type_name<member_func_clean_params>());
+    fmt::print("{}\n", dm_type_name<member_func_raw_params>());
 }
 // --- Test Suite for dmtypetraits_typelist.h ---
 TEST(DmTypeListTest, TypeListOperations) {
