@@ -47,10 +47,9 @@
 
 #if __cplusplus >= 202002L
 #include "dmtypetraits_md5.h"
+#include "dmtypetraits_reflection.h"
+#include "dmtypetraits_pack.h"
 #endif
 
-#if __cplusplus >= 202002L
-#include "dmtypetraits_reflection.h"
-#endif
 
 #endif // __DMTYPETRAITS_H_INCLUDE__
