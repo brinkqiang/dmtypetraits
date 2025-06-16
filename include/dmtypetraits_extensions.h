@@ -4,6 +4,7 @@
 #include "dmcore_typetraits.h"
 #include <tuple>
 #include <array>
+#include <string_view>
 #include <functional>
 
 //-----------------------------------------------------------------------------
@@ -336,4 +337,54 @@ using dm_conditional_t = std::conditional_t<B, T, F>;
 template<template<typename> class Condition, typename T>
 using dm_enable_if_t = std::enable_if_t<Condition<T>::value, T>;
 
+template<typename T, T... Ints>
+using dm_integer_sequence = std::integer_sequence<T, Ints...>;
+
+template<std::size_t... Ints>
+using dm_index_sequence = std::index_sequence<Ints...>;
+
+template<std::size_t N>
+using dm_make_index_sequence = std::make_index_sequence<N>;
+
+template<typename... T>
+using dm_index_sequence_for = std::index_sequence_for<T...>;
+
+
+/**
+ * @brief (C++17) 在编译期获取类型的易读名称字符串。
+ *
+ * 这是一个依赖于编译器内置宏的调试工具。
+ * @tparam T 要获取名称的类型。
+ * @return 包含类型名称的 std::string_view。
+ */
+template<typename T>
+constexpr std::string_view dm_type_name() {
+#if defined(__clang__)
+    // Clang: "std::string_view dm_type_name() [T = int]"
+    constexpr std::string_view prefix = "[T = ";
+    constexpr std::string_view suffix = "]";
+    constexpr std::string_view function = __PRETTY_FUNCTION__;
+    const auto start = function.find(prefix) + prefix.size();
+    const auto end = function.rfind(suffix);
+    return function.substr(start, (end - start));
+#elif defined(__GNUC__)
+    // GCC: "constexpr std::string_view dm_type_name() [with T = int]"
+    constexpr std::string_view prefix = "[with T = ";
+    constexpr std::string_view suffix = "]";
+    constexpr std::string_view function = __PRETTY_FUNCTION__;
+    const auto start = function.find(prefix) + prefix.size();
+    const auto end = function.rfind(suffix);
+    return function.substr(start, (end - start));
+#elif defined(_MSC_VER)
+    // MSVC: "auto __cdecl dm_type_name<int>(void)"
+    constexpr std::string_view prefix = "dm_type_name<";
+    constexpr std::string_view suffix = ">(void)";
+    constexpr std::string_view function = __FUNCSIG__;
+    const auto start = function.find(prefix) + prefix.size();
+    const auto end = function.rfind(suffix);
+    return function.substr(start, (end - start));
+#else
+    return "Unknown Type";
+#endif
+}
 #endif // __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__

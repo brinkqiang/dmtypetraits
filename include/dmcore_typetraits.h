@@ -68,6 +68,13 @@ inline constexpr bool dm_has_arrow_operator_v = dm_detail::has_arrow_operator<T>
 template<typename T>
 inline constexpr bool dm_is_container_v = dm_has_begin_v<T> && dm_has_end_v<T> && dm_has_size_v<T>;
 
+#if __cplusplus >= 202002L
+/**
+ * @brief (Concept) 判断类型 T 是否为容器。
+ */
+template<typename T>
+concept dm_container = dm_is_container_v<T>;
+#endif
 
 /**
  * @brief 判断类型 T 是否为强类型枚举 (enum class)。
