@@ -70,7 +70,8 @@ consteval auto member_count() {
     return T::members_count_t::value;
   }
   else {
-    if constexpr (requires { T{{Args{}}..., {UniversalType{}}}; } == false) {
+    // 将 T{{...}} 修改为 T{...}
+    if constexpr (requires { T{Args{}..., UniversalType{}}; } == false) {
       return sizeof...(Args);
     }
     else {
