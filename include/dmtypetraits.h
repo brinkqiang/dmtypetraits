@@ -46,6 +46,10 @@
 #include "dmtypetraits_typelist.h"    // 类型列表工具
 
 #if __cplusplus >= 202002L
+#include "dmtypetraits_md5.h"
+#endif
+
+#if __cplusplus >= 202002L
 #include "dmtypetraits_reflection.h"
 #endif
 
