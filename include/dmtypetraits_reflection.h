@@ -1133,4 +1133,18 @@ constexpr decltype(auto) DMPACK_INLINE template_switch(std::size_t index,
 } // namespace detail
 } // namespace dm::pack
 
+
+template <typename T>
+inline constexpr std::size_t dm_member_count_v = dm::pack::detail::member_count<T>();
+
+/**
+    * @brief (Alias) 遍历聚合类型对象的所有成员。
+    * @param object 要遍历的聚合实例。
+    * @param visitor 一个可调用对象 (如 lambda), 其参数类型和数量必须与 object 的成员匹配。
+    */
+template<typename T, typename Visitor>
+constexpr decltype(auto) dm_visit_members(T&& object, Visitor&& visitor) {
+    return dm::pack::detail::visit_members(std::forward<T>(object), std::forward<Visitor>(visitor));
+}
+
 #endif // __DMTYPETRAITS_REFLECTION_H_INCLUDE__
