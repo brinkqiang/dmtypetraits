@@ -23,6 +23,7 @@
 
 #include "dmbase_typetraits.h"
 #include "dmtypetraits_logical.h"
+#include "dmtypetraits_extensions.h"
 #include <tuple>
 
 //-----------------------------------------------------------------------------
