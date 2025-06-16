@@ -275,54 +275,24 @@ template<typename T>
 struct dm_remove_all_pointers {
     using type = T;
 };
-
 template<typename T>
-struct dm_remove_all_pointers<T*> {
-    using type = typename dm_remove_all_pointers<T>::type;
-};
-
-template<typename T>
-struct dm_remove_all_pointers<T* const> {
-    using type = typename dm_remove_all_pointers<T>::type;
-};
-
-template<typename T>
-struct dm_remove_all_pointers<T* volatile> {
-    using type = typename dm_remove_all_pointers<T>::type;
-};
-
-template<typename T>
-struct dm_remove_all_pointers<T* const volatile> {
-    using type = typename dm_remove_all_pointers<T>::type;
-};
+struct dm_remove_all_pointers<T*> : dm_remove_all_pointers<dm_remove_cv_t<T>> {}; // 递归移除所有指针层级
 
 template<typename T>
 using dm_remove_all_pointers_t = typename dm_remove_all_pointers<T>::type;
-
 /**
  * @brief 完全去除类型修饰符 (cv-qualifiers + references + pointers)
  */
 namespace dm_detail {
-    // 使用模板特化来根据条件选择实现
-    template<typename T, typename = void>
-    struct pure_type_impl {
-        // 默认实现：适用于非数组类型（指针、引用、普通类型等）
-        using type = dm_remove_cv_t<dm_remove_all_pointers_t<dm_remove_cvref_t<T>>>;
-    };
-
-    template<typename T>
-    struct pure_type_impl<T, std::enable_if_t<std::is_array_v<std::remove_reference_t<T>>>> {
-        // 数组类型的特化实现
-        // dm_decay_t 会将数组 T[N] 或 T[] 退化为 T*
-        using type = dm_decay_t<T>;
-    };
-} // namespace dm_detail
-
-// 最终的 dm_pure_type_t 通过辅助模板获取类型
+     template<typename T>
+     struct pure_type_impl {
+         using type = dm_remove_cv_t<dm_remove_all_pointers_t<dm_remove_cvref_t<T>>>;
+     };
+}
+//
+// 外部接口先进行 decay
 template<typename T>
-using dm_pure_type_t = typename dm_detail::pure_type_impl<T>::type;
-
-
+using dm_pure_type_t = typename dm_detail::pure_type_impl<std::decay_t<T>>::type;
 
 namespace dm_detail {
     template<typename From, typename To>
