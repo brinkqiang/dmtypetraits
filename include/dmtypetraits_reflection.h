@@ -66,19 +66,19 @@ struct UniversalType {
 
 template <typename T, typename... Args>
 consteval auto member_count() {
-  if constexpr (dm_pack_has_members_count<T>) {
-    return T::members_count_t::value;
-  }
-  else {
-    // 将 T{{...}} 修改为 T{...}
-    if constexpr (requires { T{Args{}..., UniversalType{}}; } == false) {
-      return sizeof...(Args);
+    if constexpr (dm_pack_has_members_count<T>) {
+        return T::members_count_t::value;
     }
     else {
-      return member_count<T, Args..., UniversalType>();
+        if constexpr (requires { T{ {Args{}}..., {UniversalType{}} }; } == false) {
+            return sizeof...(Args);
+        }
+        else {
+            return member_count<T, Args..., UniversalType>();
+        }
     }
-  }
 }
+
 
 // 恢复支持64个成员的完整版本
 constexpr static auto MaxVisitMembers = 64;
