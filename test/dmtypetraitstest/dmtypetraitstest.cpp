@@ -140,6 +140,7 @@ TEST(DmFunctionTypeTraitsTest, FunctionTraits) {
     static_assert(dm_is_same_v<dm_function_class_t<decltype(&MyClass::member_func)>, MyClass>, "Test Failed");
 
     fmt::print("{}\n", dm_type_name<clean_params>());
+    fmt::print("{}\n", dm_type_name<raw_params>());
     fmt::print("{}\n", dm_type_name<member_func_clean_params>());
     fmt::print("{}\n", dm_type_name<member_func_raw_params>());
 }
