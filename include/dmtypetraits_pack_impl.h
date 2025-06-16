@@ -1,4 +1,4 @@
-#ifndef __DMTYPETRAITS_PACK_IMPL_H_INCLUDE__
+ï»¿#ifndef __DMTYPETRAITS_PACK_IMPL_H_INCLUDE__
 #define __DMTYPETRAITS_PACK_IMPL_H_INCLUDE__
 
 #include <bit>
@@ -13,7 +13,7 @@
 #include <variant>
 #include <optional>
 
-#include "dmtypetraits.h" // Ö÷Í·ÎÄ¼ş
+#include "dmtypetraits.h" // ä¸»å¤´æ–‡ä»¶
 
 #if __cplusplus < 202002L
 #error "dmtypetraits_pack_impl.h requires C++20 or later."
@@ -29,10 +29,10 @@ using size_type = uint32_t;
 constexpr uint32_t MAX_SIZE = UINT32_MAX;
 
 // ===================================================================================
-// START: ÔöÇ¿µÄ±àÒëÆÚÀàĞÍĞÅÏ¢ÏµÍ³
+// START: å¢å¼ºçš„ç¼–è¯‘æœŸç±»å‹ä¿¡æ¯ç³»ç»Ÿ
 // ===================================================================================
 
-// À©Õ¹ºóµÄÀàĞÍIDÃ¶¾Ù
+// æ‰©å±•åçš„ç±»å‹IDæšä¸¾
 enum class DmTypeId : char {
     Int8 = 'a', UInt8 = 'b', Int16 = 'c', UInt16 = 'd',
     Int32 = 'e', UInt32 = 'f', Int64 = 'g', UInt64 = 'h',
@@ -50,7 +50,7 @@ enum class DmTypeId : char {
     EndAggregate = 'Z',
 };
 
-// --- ±àÒëÆÚ¸¨Öú¹¤¾ß ---
+// --- ç¼–è¯‘æœŸè¾…åŠ©å·¥å…· ---
 
 template <size_t Size>
 consteval auto encode_size_as_literal() {
@@ -61,7 +61,7 @@ consteval auto encode_size_as_literal() {
 }
 
 
-// --- ÔöÇ¿µÄÀàĞÍÊ¶±ğÓëÇ©ÃûÉú³É ---
+// --- å¢å¼ºçš„ç±»å‹è¯†åˆ«ä¸ç­¾åç”Ÿæˆ ---
 
 template <typename T>
 consteval auto get_type_literal();
@@ -98,7 +98,7 @@ consteval DmTypeId get_type_id() {
         static_assert(std::variant_size_v<type> < 256, "The variant is too complex!");
         return DmTypeId::Variant;
     }
-    // ×¢Òâ: container ¼ì²é±ØĞëÔÚ optional, variant, string µÈ¸üÌØÊâµÄÈİÆ÷Ö®ºó
+    // æ³¨æ„: container æ£€æŸ¥å¿…é¡»åœ¨ optional, variant, string ç­‰æ›´ç‰¹æ®Šçš„å®¹å™¨ä¹‹å
     else if constexpr (dm_is_container_v<type>) return DmTypeId::Container;
     else if constexpr (dm_is_tuple_v<type> || dm_is_pair_v<type>) {
         return DmTypeId::Aggregate;
@@ -146,11 +146,11 @@ consteval auto get_type_literal() {
     } else if constexpr (id == DmTypeId::Map) {
         return ret + get_type_literal<typename type::key_type>() + get_type_literal<typename type::mapped_type>();
     } else if constexpr (id == DmTypeId::Optional || id == DmTypeId::String || id == DmTypeId::Set || id == DmTypeId::Container) {
-        // ÕâĞ©ÈİÆ÷¶¼Ö»ÓĞÒ»¸ö value_type
+        // è¿™äº›å®¹å™¨éƒ½åªæœ‰ä¸€ä¸ª value_type
         return ret + get_type_literal<typename type::value_type>();
     }
     else {
-        // »ù´¡ÀàĞÍ, Monostate µÈ
+        // åŸºç¡€ç±»å‹, Monostate ç­‰
         return ret;
     }
 }
@@ -162,17 +162,17 @@ consteval uint32_t get_types_code() {
 }
 
 // ===================================================================================
-// END: ÔöÇ¿µÄ±àÒëÆÚÀàĞÍĞÅÏ¢ÏµÍ³
+// END: å¢å¼ºçš„ç¼–è¯‘æœŸç±»å‹ä¿¡æ¯ç³»ç»Ÿ
 // ===================================================================================
 
-// Ç°ÏòÉùÃ÷
+// å‰å‘å£°æ˜
 template <typename T, typename... Args>
 constexpr size_t calculate_needed_size(const T& item, const Args&... items);
 
-// µİ¹é»ùÀı
+// é€’å½’åŸºä¾‹
 constexpr size_t calculate_needed_size() { return 0; }
 
-// ¼ÆËã´óĞ¡µÄÖ÷µİ¹éº¯Êı
+// è®¡ç®—å¤§å°çš„ä¸»é€’å½’å‡½æ•°
 template <typename T, typename... Args>
 constexpr size_t calculate_needed_size(const T& item, const Args&... items) {
     using type = dm_remove_cvref_t<T>;
@@ -213,12 +213,12 @@ constexpr size_t calculate_needed_size(const T& item, const Args&... items) {
     return current_size + calculate_needed_size(items...);
 }
 
-// Í¨¹ıË÷Òı·ÃÎÊ variant µÄ¸¨Öúº¯Êı
+// é€šè¿‡ç´¢å¼•è®¿é—® variant çš„è¾…åŠ©å‡½æ•°
 template<typename Variant, typename F>
 bool visit_variant_at(size_t index, Variant& var, F&& func) {
     constexpr size_t n = std::variant_size_v<Variant>;
     bool result = false;
-    // Ê¹ÓÃÕÛµş±í´ïÊ½ºÍ lambda ÔÚ¸ø¶¨µÄË÷Òı´¦Ö´ĞĞÕıÈ·µÄ emplace ºÍº¯Êıµ÷ÓÃ
+    // ä½¿ç”¨æŠ˜å è¡¨è¾¾å¼å’Œ lambda åœ¨ç»™å®šçš„ç´¢å¼•å¤„æ‰§è¡Œæ­£ç¡®çš„ emplace å’Œå‡½æ•°è°ƒç”¨
     ([&]<size_t... I>(std::index_sequence<I...>) {
         ( (I == index ? (var.template emplace<I>(), result = func(std::get<I>(var)), true) : false) || ... );
     }(std::make_index_sequence<n>{}));
@@ -314,7 +314,7 @@ public:
         
         constexpr uint32_t expected_code = pack_detail::get_types_code<Args...>();
         if (stored_code != expected_code) {
-            return false; // ÀàĞÍ²»Æ¥Åä
+            return false; // ç±»å‹ä¸åŒ¹é…
         }
 
         return (deserialize_one(args) && ...);

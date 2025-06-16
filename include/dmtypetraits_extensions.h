@@ -73,7 +73,7 @@ namespace dm_detail {
     template<typename T, typename = void>
     struct has_mapped_type : std::false_type {};
     template<typename T>
-    struct has_mapped_type<T, std::void_t<decltype(std::declval<T>().mapped_type())>> : std::true_type {};
+    struct has_mapped_type<T, std::void_t<typename T::mapped_type>> : std::true_type {}; // <--- BUG FIX HERE
 
     // 检测 T 是否有 iterator 成员类型
     template<typename T, typename = void>
