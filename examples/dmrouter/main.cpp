@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 #include <vector>
 #include <functional>
@@ -25,35 +25,35 @@ int main(int argc, char* argv[])
             return name + value + std::to_string(nID);
             });
 
-        // µ÷ÓÃ CallRouter Ê±Ö¸¶¨ÆÚÍûµÄ·µ»ØÀàĞÍ×÷ÎªÄ£°å²ÎÊı
+        // è°ƒç”¨ CallRouter æ—¶æŒ‡å®šæœŸæœ›çš„è¿”å›ç±»å‹ä½œä¸ºæ¨¡æ¿å‚æ•°
         std::string router_ret = router->CallRouter<std::string>("/helloworld", "hello", "world");
         int         router_ret2 = router->CallRouter<int>("/getid", 1, 2);
         std::string router_ret3 = router->CallRouter<std::string>("/helloworld_getid", "hello", "world", 3);
 
-        // ÏÖÔÚ¿ÉÒÔÖ±½ÓÊ¹ÓÃÀàĞÍ»¯µÄ½á¹û£¬ÎŞĞè std::any_cast
+        // ç°åœ¨å¯ä»¥ç›´æ¥ä½¿ç”¨ç±»å‹åŒ–çš„ç»“æœï¼Œæ— éœ€ std::any_cast
         fmt::print("{} + {} = {}\n", router_ret, router_ret2, router_ret3);
 
         try
         {
-            // Õâ¸öµ÷ÓÃÈç¹ûÀàĞÍ²»Æ¥Åä£¨ÀıÈç£¬ÆÚÍû string£¬µ«Êµ¼Ê²ÎÊıµ¼ÖÂÄÚ²¿×ª»»Ê§°Ü»òÀàĞÍ²»·û£©
-            // »òÕßÆÚÍûµÄ ResultType ÓëÊµ¼Êhandler·µ»ØµÄÀàĞÍ²»·û£¬CallRouter ÄÚ²¿µÄ any_cast »áÅ×³öÒì³£
+            // è¿™ä¸ªè°ƒç”¨å¦‚æœç±»å‹ä¸åŒ¹é…ï¼ˆä¾‹å¦‚ï¼ŒæœŸæœ› stringï¼Œä½†å®é™…å‚æ•°å¯¼è‡´å†…éƒ¨è½¬æ¢å¤±è´¥æˆ–ç±»å‹ä¸ç¬¦ï¼‰
+            // æˆ–è€…æœŸæœ›çš„ ResultType ä¸å®é™…handlerè¿”å›çš„ç±»å‹ä¸ç¬¦ï¼ŒCallRouter å†…éƒ¨çš„ any_cast ä¼šæŠ›å‡ºå¼‚å¸¸
             auto router_ret4 = router->CallRouter<std::string>("/helloworld_getid", "hello", "world", "world_string_instead_of_int");
-            fmt::print("Router_ret4: {}\n", router_ret4); // Èç¹ûÉÏÃæÒ»ĞĞÒòÎªÀàĞÍ²»Æ¥ÅäµÄ²ÎÊıµ¼ÖÂÄÚ²¿any_castÊ§°Ü£¬ÕâÀï²»»áÖ´ĞĞ
+            fmt::print("Router_ret4: {}\n", router_ret4); // å¦‚æœä¸Šé¢ä¸€è¡Œå› ä¸ºç±»å‹ä¸åŒ¹é…çš„å‚æ•°å¯¼è‡´å†…éƒ¨any_castå¤±è´¥ï¼Œè¿™é‡Œä¸ä¼šæ‰§è¡Œ
         }
         catch (const std::exception& e)
         {
             fmt::print("error: {}\n", e.what());
-            // Ô¤ÆÚµÄ´íÎó¿ÉÄÜÊÇ:
-            // 1. ÔÚ RegisterRouter µÄ lambda ÖĞ£ºstd::any_cast<ParametersTupleType>(args_from_caller) Ê§°Ü£¨Èç¹û ConvertArgsToString µÄ½á¹ûÓë ParametersTupleType ²»·û£©
-            // 2. ÔÚ CallRouter ÖĞ£ºstd::any_cast<ResultType>(result_any) Ê§°Ü£¨Èç¹ûÓÃ»§Ö¸¶¨µÄ ResultType Óë handler Êµ¼Ê·µ»ØµÄÀàĞÍ²»·û£©
-            // ÄúµÄÀı×ÓÖĞ£¬"/helloworld_getid" ÆÚÍûµÚÈı¸ö²ÎÊıÊÇ int£¬µ«Äú´«ÈëÁË "world_string_instead_of_int"¡£
-            // ConvertArgsToString »á½«Ëü±ä³É std::string¡£
-            // RegisterRouter ÖĞ¶ÔÓ¦µÄ lambda ÆÚÍû std::tuple<std::string, std::string, int>¡£
-            // µ±Ëü³¢ÊÔ std::any_cast<std::tuple<..., int>>(°üº¬ std::tuple<..., std::string> µÄ std::any) Ê±»áÊ§°Ü¡£
+            // é¢„æœŸçš„é”™è¯¯å¯èƒ½æ˜¯:
+            // 1. åœ¨ RegisterRouter çš„ lambda ä¸­ï¼šstd::any_cast<ParametersTupleType>(args_from_caller) å¤±è´¥ï¼ˆå¦‚æœ ConvertArgsToString çš„ç»“æœä¸ ParametersTupleType ä¸ç¬¦ï¼‰
+            // 2. åœ¨ CallRouter ä¸­ï¼šstd::any_cast<ResultType>(result_any) å¤±è´¥ï¼ˆå¦‚æœç”¨æˆ·æŒ‡å®šçš„ ResultType ä¸ handler å®é™…è¿”å›çš„ç±»å‹ä¸ç¬¦ï¼‰
+            // æ‚¨çš„ä¾‹å­ä¸­ï¼Œ"/helloworld_getid" æœŸæœ›ç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯ intï¼Œä½†æ‚¨ä¼ å…¥äº† "world_string_instead_of_int"ã€‚
+            // ConvertArgsToString ä¼šå°†å®ƒå˜æˆ std::stringã€‚
+            // RegisterRouter ä¸­å¯¹åº”çš„ lambda æœŸæœ› std::tuple<std::string, std::string, int>ã€‚
+            // å½“å®ƒå°è¯• std::any_cast<std::tuple<..., int>>(åŒ…å« std::tuple<..., std::string> çš„ std::any) æ—¶ä¼šå¤±è´¥ã€‚
         }
 
         router->RegisterRouter("/user/profile",
-            [](int id, const std::string& name, const std::vector<std::string>& devs) -> std::string { // Ã÷È··µ»ØÀàĞÍ
+            [](int id, const std::string& name, const std::vector<std::string>& devs) -> std::string { // æ˜ç¡®è¿”å›ç±»å‹
                 return fmt::format("/user/profile {}: {} [{}]\n", id, name, fmt::join(devs, ", "));
             });
 

@@ -19,6 +19,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "dmos.h"
+
 #include <memory>
 #include <atomic>
 #include <unordered_map>
@@ -29,6 +31,7 @@
 #include <any>
 #include <stdexcept>
 #include <mutex>
+
 #include "dmtypetraits_function.h"
 
 class CDMRouterModule : public std::enable_shared_from_this<CDMRouterModule> {
