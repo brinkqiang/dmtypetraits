@@ -1,7 +1,7 @@
 ﻿#ifndef __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 #define __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 
-#include "dmtypetraits.h"
+#include "dmcore_typetraits.h"
 #include <tuple>
 #include <array>
 #include <functional>
