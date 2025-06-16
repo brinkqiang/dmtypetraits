@@ -17,7 +17,7 @@ struct MyClass {
 enum OldEnum { A, B };
 enum class ScopedEnum { X, Y };
 
-static void free_function(double, bool) {}
+void free_function(double, bool) {}
 
 // --- Test Suite for dmbase_typetraits.h ---
 TEST(DmBaseTypeTraitsTest, BasicTraits) {
