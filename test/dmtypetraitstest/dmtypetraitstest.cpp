@@ -7,7 +7,7 @@
 #include <set>
 #include <memory>
 #include <functional>
-
+#include "dmformat.h"
 // --- 测试用的辅助类型和函数 ---
 struct MyClass {
     void member_func(int) const {}
@@ -154,6 +154,7 @@ TEST(DmTypeListTest, TypeListOperations) {
 
     // 操作
     using PushedFront = dm_typelist_push_front_t<MyList, bool>;
+
     static_assert(dm_is_same_v<PushedFront, dm_typelist<bool, int, float, const char*, int>>, "Test Failed");
 
     using PushedBack = dm_typelist_push_back_t<MyList, bool>;
@@ -168,4 +169,11 @@ TEST(DmTypeListTest, TypeListOperations) {
 
     using Integrals = dm_typelist_filter_t<dm_typelist<int, float, char, long, double>, std::is_integral>;
     static_assert(dm_is_same_v<Integrals, dm_typelist<int, char, long>>, "Test Failed: filter");
+
+
+    fmt::print("{}\n", dm_type_name<PushedFront>());
+    fmt::print("{}\n", dm_type_name<PushedBack>());
+    fmt::print("{}\n", dm_type_name<PoppedFront>());
+    fmt::print("{}\n", dm_type_name<Pointers>());
+    fmt::print("{}\n", dm_type_name<Integrals>());
 }
