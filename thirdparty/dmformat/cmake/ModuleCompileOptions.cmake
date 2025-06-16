@@ -45,8 +45,7 @@ macro(ModuleSetCompileOptions)
   if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
   endif()
-
-
+  
   set(CMAKE_C_STANDARD 99)
 
   set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
@@ -109,11 +108,15 @@ macro(ModuleSetCompileOptions)
       add_definitions(/utf-8)
       add_compile_options(/W3 /wd4005 /wd4068 /wd4244 /wd4267 /wd4800 /wd4996)
 
+      check_cxx_compiler_flag("/std:c++20" COMPILER_SUPPORTS_CXX20)
       check_cxx_compiler_flag("/std:c++17" COMPILER_SUPPORTS_CXX17)
       check_cxx_compiler_flag("/std:c++14" COMPILER_SUPPORTS_CXX14)
       check_cxx_compiler_flag("/std:c++11" COMPILER_SUPPORTS_CXX11)
       
-      if(COMPILER_SUPPORTS_CXX17)
+      if(COMPILER_SUPPORTS_CXX20)
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")
+          message(STATUS "The compiler has /std:c++20 support.")
+      elseif(COMPILER_SUPPORTS_CXX17)
           set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
           message(STATUS "The compiler has /std:c++17 support.")
       elseif(COMPILER_SUPPORTS_CXX14)
@@ -131,11 +134,15 @@ macro(ModuleSetCompileOptions)
 
     set(DMOS_NAME "mac") 
 
+    check_cxx_compiler_flag("-std=c++20" COMPILER_SUPPORTS_CXX20)
     check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
     check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
     check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
 
-    if(COMPILER_SUPPORTS_CXX17)
+    if(COMPILER_SUPPORTS_CXX20)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
+        message(STATUS "The compiler has -std=c++20 support.")
+    elseif(COMPILER_SUPPORTS_CXX17)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
         message(STATUS "The compiler has -std=c++17 support.")
     elseif(COMPILER_SUPPORTS_CXX14)
@@ -180,11 +187,15 @@ macro(ModuleSetCompileOptions)
 
     set(DMOS_NAME "lin")
 
+    check_cxx_compiler_flag("-std=c++20" COMPILER_SUPPORTS_CXX20)
     check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
     check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
     check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
     
-    if(COMPILER_SUPPORTS_CXX17)
+    if(COMPILER_SUPPORTS_CXX20)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
+        message(STATUS "The compiler has -std=c++20 support.")
+    elseif(COMPILER_SUPPORTS_CXX17)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
         message(STATUS "The compiler has -std=c++17 support.")
     elseif(COMPILER_SUPPORTS_CXX14)
@@ -239,9 +250,8 @@ macro(ModuleSetWinCompilerFlags)
     if (MSVC)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif()
-  endif (WIN32)
+  endif ()
 endmacro()
-
 
 macro(AddInstall ModuleList HeadersDir)
     message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
@@ -255,13 +265,13 @@ macro(AddInstall ModuleList HeadersDir)
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
-    else(WIN32)
+    else()
         include(GNUInstallDirs)
         install(TARGETS ${ModuleList}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    endif(WIN32)
+    endif()
 
     if (EXISTS "${HeadersDir}" AND NOT "${HeadersDir}" STREQUAL "")
         message(STATUS "Installing headers from: ${HeadersDir}")
