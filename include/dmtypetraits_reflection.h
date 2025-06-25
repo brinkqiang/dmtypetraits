@@ -1147,4 +1147,37 @@ constexpr decltype(auto) dm_visit_members(T&& object, Visitor&& visitor) {
     return dm::pack::detail::visit_members(std::forward<T>(object), std::forward<Visitor>(visitor));
 }
 
+/**
+ * @brief (版本1: 返回值形式) 从一个 std::tuple 创建并返回一个聚合类型的对象。
+ *
+ * @tparam Struct 要创建的结构体的类型。
+ * @tparam Tuple 源元组的类型。
+ * @param t 一个元组，其元素将被用作 Struct 的构造参数。
+ * @return 一个新创建的 Struct 对象。
+ */
+template <typename Struct, typename Tuple>
+constexpr Struct dm_tuple_to_struct(Tuple&& t) {
+    // 编译期检查：确保元组和结构体的成员数量一致
+    constexpr size_t tuple_size = std::tuple_size_v<std::decay_t<Tuple>>;
+    constexpr size_t struct_size = dm_member_count_v<Struct>;
+    static_assert(struct_size == tuple_size, "Struct member count must match tuple element count.");
+
+    // 使用 std::make_from_tuple，它会解包元组 t 的元素，
+    // 并将它们作为参数传递给 Struct 的构造函数。
+    // 对于聚合类型，这相当于 Struct{std::get<0>(t), std::get<1>(t), ...}
+    return std::make_from_tuple<Struct>(std::forward<Tuple>(t));
+}
+
+
+/**
+ * @brief 将一个聚合类型（如 struct）的对象转换为 std::tuple。
+ */
+template <typename T>
+constexpr decltype(auto) dm_struct_to_tuple(T&& object) {
+    return dm_visit_members(std::forward<T>(object),
+        [](auto&&... members) {
+            return std::forward_as_tuple(std::forward<decltype(members)>(members)...);
+        }
+    );
+}
 #endif // __DMTYPETRAITS_REFLECTION_H_INCLUDE__
