@@ -4,7 +4,6 @@
 #include "dmtypetraits_reflection.h"
 #include "dmtypetraits_md5.h"
 
-#include <bit>
 #include <climits>
 #include <cstring>
 #include <iostream>

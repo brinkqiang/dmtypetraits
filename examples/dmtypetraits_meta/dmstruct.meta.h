@@ -63,7 +63,7 @@ struct traits<ComplexData> {
 
     constexpr static auto members() {
         return std::make_tuple(
-            std::make_pair("id", &ComplexData::id),            std::make_pair("status", &ComplexData::status),            std::make_pair("metadata", &ComplexData::metadata),            std::make_pair("properties", &ComplexData::properties),            std::make_pair("sensor_readings", &ComplexData::sensor_readings)        );
+            std::make_pair("id", &ComplexData::id),            std::make_pair("status", &ComplexData::status),            std::make_pair("metadata", &ComplexData::metadata),            std::make_pair("properties", &ComplexData::properties),            std::make_pair("sensor_readings", &ComplexData::sensor_readings),            std::make_pair("metadatas", &ComplexData::metadatas)        );
     }
 };
 

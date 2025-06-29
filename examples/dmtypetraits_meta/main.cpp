@@ -22,9 +22,10 @@ int main() {
     ComplexData original_data = {
         101,                                            // id
         Status::Ok,                                     // status (enum)
-        {"brinkqiang", 1678886400},                     // metadata (nested struct)
+        {"tom", 1156},                     // metadata (nested struct)
         {{"property1", 10}, {"property2", 20}},         // properties (map)
         {0.1f, 0.2f, 0.3f, 0.4f, 0.5f},                 // sensor_readings (vector)
+        {{"jerry", 1347}}
     };
 
     std::cout << "Class: " << dm::refl::traits<ComplexData>::name << std::endl;

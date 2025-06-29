@@ -50,6 +50,8 @@ struct ComplexData {
     Metadata metadata; // 嵌套聚合类型
     std::map<std::string, int> properties;
     std::vector<float> sensor_readings;
+    std::vector<Metadata> metadatas;
+
 // export_end
     // 为了断言验证，需要提供 operator==
     bool operator==(const ComplexData& other) const {
@@ -57,7 +59,8 @@ struct ComplexData {
             status == other.status &&
             metadata == other.metadata &&
             properties == other.properties &&
-            sensor_readings == other.sensor_readings;
+            sensor_readings == other.sensor_readings &&
+            metadatas == other.metadatas;
     }
 };
 
