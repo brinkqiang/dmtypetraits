@@ -148,7 +148,6 @@ namespace dm::pack {
         constexpr type_id get_type_id() {
             static_assert(CHAR_BIT == 8);
             using U = dm_remove_cvref_t<T>;
-            //if constexpr (dm_is_optional_v<U> && requires { requires dm_is_same_v<dm::pack::compatible<typename U::value_type>, U>; }) { return type_id::compatible_t; }
             if constexpr (dm_is_enum_v<U>) { return get_integral_type<dm_underlying_type_t<U>>(); }
             else if constexpr (dm_is_integral_v<U>) { return get_integral_type<U>(); }
             else if constexpr (dm_is_floating_point_v<U>) { return get_floating_point_type<U>(); }
@@ -170,7 +169,7 @@ namespace dm::pack {
                 static_assert(dm_is_aggregate_v<U>);
                 return type_id::aggregate_class_t;
             }
-            else { static_assert(!sizeof(U), "not supported type"); }
+            else { static_assert(!sizeof(T), "not supported type"); }
         }
 
         template <size_t size>
@@ -479,6 +478,7 @@ namespace dm::pack {
                         using value_type = typename type::value_type;
                         auto sz = item.size() * sizeof(value_type);
                         std::memcpy(data_ + pos_, item.data(), sz);
+
                         pos_ += sz;
                         return;
                     }

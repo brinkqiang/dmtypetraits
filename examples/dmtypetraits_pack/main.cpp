@@ -49,7 +49,6 @@ struct ComplexData {
         return id == other.id &&
             status == other.status &&
             metadata == other.metadata &&
-            //optional_description == other.optional_description &&
             properties == other.properties &&
             sensor_readings == other.sensor_readings &&
             fixed_id == other.fixed_id &&
