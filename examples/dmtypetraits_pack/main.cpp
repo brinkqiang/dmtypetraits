@@ -65,7 +65,7 @@ void print_variant(const std::variant<int, double, std::string>& v) {
 
 
 int main() {
-    // 2. 创建一个复杂的对象并填充数据
+    // 1. 创建一个复杂的对象并填充数据
     ComplexData original_data = {
         101,                                            // id
         Status::Ok,                                     // status (enum)
@@ -80,23 +80,23 @@ int main() {
 
     auto new_ComplexData = dm_tuple_to_struct<ComplexData>(tuple_data);
 
-    // 3. 序列化对象
+    // 2. 序列化对象
     std::cout << "--- Serializing ComplexData object ---" << std::endl;
     std::vector<char> buffer = dm::pack::serialize(original_data);
     std::cout << "Successfully serialized object into " << buffer.size() << " bytes." << std::endl;
 
-    // 4. 反序列化对象
+    // 3. 反序列化对象
     std::cout << "\n--- Deserializing buffer back to object ---" << std::endl;
     auto [error_code, new_data] =  dm::pack::deserialize<ComplexData>(buffer);
 
-    // 5. 检查错误并验证数据完整性
+    // 4. 检查错误并验证数据完整性
     assert(error_code == std::errc{});
     std::cout << "Deserialization completed with no errors." << std::endl;
 
     assert(original_data == new_data);
     std::cout << "Data integrity verified: Original and deserialized objects are identical." << std::endl;
 
-    // 6. 打印一些反序列化后的数据以供查看
+    // 5. 打印一些反序列化后的数据以供查看
     std::cout << "\n--- Verification Details ---" << std::endl;
     std::cout << "ID: " << new_data.id << std::endl;
     std::cout << "Status: " << static_cast<int>(new_data.status) << " (0=Ok, 1=Warning, 2=Error)" << std::endl;
