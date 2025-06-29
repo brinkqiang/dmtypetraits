@@ -1,5 +1,4 @@
 
-#if __cplusplus >= 202002L
 
 #include "dmtypetraits.h"
 #include <iostream>
@@ -46,15 +45,9 @@ int main() {
         });
     std::cout << "Modified score: " << player.score << std::endl;
 
-    auto tuple_player = dm_struct_to_tuple(player);
+    //auto tuple_player = dm_struct_to_tuple(player);
 
-    auto new_player = dm_tuple_to_struct<Player>(tuple_player);
+    //auto new_player = dm_tuple_to_struct<Player>(tuple_player);
 
     return 0;
 }
-
-#else
-int main() {
-    return 0;
-}
-#endif
