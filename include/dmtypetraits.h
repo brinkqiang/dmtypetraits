@@ -48,5 +48,5 @@
 #include "dmtypetraits_md5.h"
 #include "dmtypetraits_reflection.h"
 #include "dmtypetraits_pack.h"
-
+#include "dmtypetraits_reflection_intrusive.h"
 #endif // __DMTYPETRAITS_H_INCLUDE__
