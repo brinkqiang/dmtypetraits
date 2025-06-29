@@ -1,5 +1,4 @@
 ﻿
-#if __cplusplus >= 202002L
 
 #include "dmtypetraits.h" // 唯一需要包含的头文件
 
@@ -40,7 +39,6 @@ struct ComplexData {
     int id;
     Status status;
     Metadata metadata; // 嵌套聚合类型
-    std::variant<int, double, std::string> data_payload;
     std::map<std::string, int> properties;
     std::vector<float> sensor_readings;
     std::array<char, 4> fixed_id;
@@ -52,7 +50,6 @@ struct ComplexData {
             status == other.status &&
             metadata == other.metadata &&
             //optional_description == other.optional_description &&
-            data_payload == other.data_payload &&
             properties == other.properties &&
             sensor_readings == other.sensor_readings &&
             fixed_id == other.fixed_id &&
@@ -74,7 +71,6 @@ int main() {
         101,                                            // id
         Status::Ok,                                     // status (enum)
         {"brinkqiang", 1678886400},                     // metadata (nested struct)
-        3.14159,                                        // data_payload (variant holding a double)
         {{"property1", 10}, {"property2", 20}},         // properties (map)
         {0.1f, 0.2f, 0.3f, 0.4f, 0.5f},                 // sensor_readings (vector)
         {'A', 'B', 'C', 'D'},                           // fixed_id (array)
@@ -102,9 +98,7 @@ int main() {
     std::cout << "ID: " << new_data.id << std::endl;
     std::cout << "Status: " << static_cast<int>(new_data.status) << " (0=Ok, 1=Warning, 2=Error)" << std::endl;
     std::cout << "Metadata Author: " << new_data.metadata.author << std::endl;
-    //std::cout << "Optional Description: " << new_data.optional_description.value_or("N/A") << std::endl;
-    std::cout << "Variant Payload: ";
-    print_variant(new_data.data_payload);
+
     std::cout << std::endl;
     std::cout << "First Property: " << new_data.properties.begin()->first << " -> " << new_data.properties.begin()->second << std::endl;
     std::cout << "Sensor Reading Count: " << new_data.sensor_readings.size() << std::endl;
@@ -115,9 +109,3 @@ int main() {
 
     return 0;
 }
-
-#else
-int main() {
-    return 0;
-}
-#endif

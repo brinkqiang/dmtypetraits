@@ -27,8 +27,6 @@ struct string_literal : public std::array<CharType, Size + 1> {
     }
   }
 
-  auto operator<=>(const string_literal &) const = default;
-
   constexpr std::size_t size() const { return Size; }
 
   constexpr bool empty() const { return !Size; }
@@ -52,7 +50,7 @@ string_literal(const CharType (&value)[Size])
     -> string_literal<CharType, Size - 1>;
 
 template <typename CharType, size_t Len1, size_t Len2>
-decltype(auto) consteval operator+(string_literal<CharType, Len1> str1,
+constexpr decltype(auto) operator+(string_literal<CharType, Len1> str1,
                                    string_literal<CharType, Len2> str2) {
   auto ret = string_literal<CharType, Len1 + Len2>{};
   for (size_t i = 0; i < Len1; ++i) {
@@ -170,8 +168,8 @@ constexpr uint32_t MD5Hash32Constexpr(const char *string) {
 constexpr uint32_t MD5Hash32Constexpr(const char *string, uint32_t length) {
   return MD5CE::Hash32(string, length);
 }
-}  // namespace MD5
-} // namespace detail
-}  // namespace dm::pack
+}
+}
+}
 
-#endif  // __DMTYPETRAITS_MD5_H_INCLUDE__
+#endif

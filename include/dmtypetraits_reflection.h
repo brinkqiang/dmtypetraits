@@ -2,11 +2,10 @@
 #define __DMTYPETRAITS_REFLECTION_H_INCLUDE__
 
 #include "dmtypetraits_extensions.h"
-#include <variant> // for std::monostate and std::variant
+#include <variant>
 #include <vector>
 #include <string>
 
-// C++20's char8_t
 #if __cplusplus >= 202002L
 #include <string>
 #endif
@@ -25,7 +24,6 @@
 namespace dm::pack {
 namespace detail {
 
-// ... (之前定义的 SFINAE 工具和类型概念保持不变)
 namespace dm_detail {
     template<typename T, typename = void> struct has_length : std::false_type {};
     template<typename T> struct has_length<T, std::void_t<decltype(std::declval<T>().length())>> : std::true_type {};
@@ -39,24 +37,57 @@ namespace dm_detail {
     template <typename... args> struct is_std_basic_string<std::basic_string<args...>> : std::true_type {};
     template<typename T, typename = void> struct has_expected_members : std::false_type {};
     template<typename T> struct has_expected_members<T, std::void_t<typename T::value_type, typename T::error_type, typename T::unexpected_type>> : std::true_type {};
+
+    template<typename T, typename, typename... Args>
+    struct is_brace_constructible_impl : std::false_type {};
+    template<typename T, typename... Args>
+    struct is_brace_constructible_impl<T, std::void_t<decltype(T{{Args{}}...})>, Args...> : std::true_type {};
 }
+
+template<typename T, typename... Args>
+inline constexpr bool is_brace_constructible_v = dm_detail::is_brace_constructible_impl<T, void, Args...>::value;
+
 template<typename T> inline constexpr bool dm_pack_has_length_v = dm_detail::has_length<T>::value;
 template<typename T> inline constexpr bool dm_pack_has_data_v = dm_detail::has_data<T>::value;
 template<typename T> inline constexpr bool dm_pack_has_resize_v = dm_detail::has_resize<T>::value;
 template<typename T> inline constexpr bool dm_pack_is_std_vector_v = dm_detail::is_std_vector<dm_remove_cvref_t<T>>::value;
 template<typename T> inline constexpr bool dm_pack_is_std_basic_string_v = dm_detail::is_std_basic_string<dm_remove_cvref_t<T>>::value;
-template <typename Type> concept dm_pack_deserialize_view = dm_has_size_v<Type> && dm_pack_has_data_v<Type>;
-template <typename Type> concept dm_pack_is_char_t = dm_is_same_v<Type, signed char> || dm_is_same_v<Type, char> || dm_is_same_v<Type, unsigned char> || dm_is_same_v<Type, wchar_t> || dm_is_same_v<Type, char16_t> || dm_is_same_v<Type, char32_t>
+
+template <typename Type>
+inline constexpr bool dm_pack_deserialize_view_v = dm_has_size_v<Type> && dm_pack_has_data_v<Type>;
+
+template <typename Type>
+inline constexpr bool dm_pack_is_char_t_v = dm_is_same_v<Type, signed char> || dm_is_same_v<Type, char> || dm_is_same_v<Type, unsigned char> || dm_is_same_v<Type, wchar_t> || dm_is_same_v<Type, char16_t> || dm_is_same_v<Type, char32_t>
 #if __cplusplus >= 202002L
     || dm_is_same_v<Type, char8_t>
 #endif
 ;
-template <typename Type> concept dm_pack_string = dm_is_iterable_v<Type> && dm_has_value_type_v<Type> && requires(Type container) { requires dm_pack_is_char_t<dm_element_type_t<Type>>; requires dm_pack_has_length_v<Type>; requires dm_pack_has_data_v<Type>; };
-template <typename Type> concept dm_pack_string_view = dm_pack_string<Type> && !dm_pack_has_resize_v<Type>;
-template <typename Type> concept dm_pack_continuous_container = (dm_is_container_v<Type> && dm_pack_has_resize_v<Type>) && (dm_pack_is_std_vector_v<Type> || dm_pack_is_std_basic_string_v<Type>);
-template <typename Type> concept dm_pack_trivially_copyable_container = dm_pack_continuous_container<Type> && requires(Type) { requires dm_is_trivially_copyable_v<dm_element_type_t<Type>>; };
-template <typename Type> concept dm_pack_expected = dm_detail::has_expected_members<dm_remove_cvref_t<Type>>::value && requires(Type e) { e.has_value(); e.error(); requires dm_is_same_v<void, typename dm_remove_cvref_t<Type>::value_type> || requires(Type e) { e.value(); }; };
-template <typename Type> concept dm_pack_has_members_count = requires { typename dm_remove_cvref_t<Type>::members_count_t; };
+
+template <typename Type>
+inline constexpr bool dm_pack_string_v = dm_is_iterable_v<Type> && dm_has_value_type_v<Type> && dm_pack_is_char_t_v<dm_element_type_t<Type>> && dm_pack_has_length_v<Type> && dm_pack_has_data_v<Type>;
+
+template <typename Type>
+inline constexpr bool dm_pack_string_view_v = dm_pack_string_v<Type> && !dm_pack_has_resize_v<Type>;
+
+template <typename Type>
+inline constexpr bool dm_pack_continuous_container_v = (dm_is_container_v<Type> && dm_pack_has_resize_v<Type>) && (dm_pack_is_std_vector_v<Type> || dm_pack_is_std_basic_string_v<Type>);
+
+template <typename Type>
+inline constexpr bool dm_pack_trivially_copyable_container_v = dm_pack_continuous_container_v<Type> && dm_is_trivially_copyable_v<dm_element_type_t<Type>>;
+
+template <typename Type>
+inline constexpr bool dm_pack_expected_v = dm_detail::has_expected_members<dm_remove_cvref_t<Type>>::value;
+
+template <typename Type>
+struct dm_pack_has_members_count_trait {
+private:
+    template<typename U> static std::true_type test(typename U::members_count_t*);
+    template<typename U> static std::false_type test(...);
+public:
+    static constexpr bool value = decltype(test<dm_remove_cvref_t<Type>>(nullptr))::value;
+};
+template <typename Type>
+inline constexpr bool dm_pack_has_members_count_v = dm_pack_has_members_count_trait<Type>::value;
 
 
 struct UniversalType {
@@ -65,12 +96,12 @@ struct UniversalType {
 };
 
 template <typename T, typename... Args>
-consteval auto member_count() {
-    if constexpr (dm_pack_has_members_count<T>) {
+constexpr auto member_count() {
+    if constexpr (dm_pack_has_members_count_v<T>) {
         return T::members_count_t::value;
     }
     else {
-        if constexpr (requires { T{ {Args{}}..., {UniversalType{}} }; } == false) {
+        if constexpr (!is_brace_constructible_v<T, Args..., UniversalType>) {
             return sizeof...(Args);
         }
         else {
@@ -80,12 +111,12 @@ consteval auto member_count() {
 }
 
 
-// 恢复支持64个成员的完整版本
 constexpr static auto MaxVisitMembers = 64;
 
-constexpr decltype(auto) DMPACK_INLINE visit_members(auto &&object,
-                                                          auto &&visitor) {
-  using type = std::remove_cvref_t<decltype(object)>;
+template <typename T, typename Visitor>
+constexpr decltype(auto) DMPACK_INLINE visit_members(T &&object,
+                                                     Visitor &&visitor) {
+  using type = dm_remove_cvref_t<decltype(object)>;
   constexpr auto Count = member_count<type>();
   if constexpr (Count == 0 && std::is_class_v<type> &&
                 !std::is_same_v<type, std::monostate>) {
@@ -1126,52 +1157,31 @@ constexpr decltype(auto) DMPACK_INLINE template_switch(std::size_t index,
       return Func<254, Args...>::run(args...);
     default:
       return Func<255, Args...>::run(args...);
-      // index shouldn't bigger than 256
   }
 }
 
-} // namespace detail
-} // namespace dm::pack
+}
+}
 
 
 template <typename T>
 inline constexpr std::size_t dm_member_count_v = dm::pack::detail::member_count<T>();
 
-/**
-    * @brief (Alias) 遍历聚合类型对象的所有成员。
-    * @param object 要遍历的聚合实例。
-    * @param visitor 一个可调用对象 (如 lambda), 其参数类型和数量必须与 object 的成员匹配。
-    */
 template<typename T, typename Visitor>
 constexpr decltype(auto) dm_visit_members(T&& object, Visitor&& visitor) {
     return dm::pack::detail::visit_members(std::forward<T>(object), std::forward<Visitor>(visitor));
 }
 
-/**
- * @brief (版本1: 返回值形式) 从一个 std::tuple 创建并返回一个聚合类型的对象。
- *
- * @tparam Struct 要创建的结构体的类型。
- * @tparam Tuple 源元组的类型。
- * @param t 一个元组，其元素将被用作 Struct 的构造参数。
- * @return 一个新创建的 Struct 对象。
- */
 template <typename Struct, typename Tuple>
 constexpr Struct dm_tuple_to_struct(Tuple&& t) {
-    // 编译期检查：确保元组和结构体的成员数量一致
     constexpr size_t tuple_size = std::tuple_size_v<std::decay_t<Tuple>>;
     constexpr size_t struct_size = dm_member_count_v<Struct>;
     static_assert(struct_size == tuple_size, "Struct member count must match tuple element count.");
 
-    // 使用 std::make_from_tuple，它会解包元组 t 的元素，
-    // 并将它们作为参数传递给 Struct 的构造函数。
-    // 对于聚合类型，这相当于 Struct{std::get<0>(t), std::get<1>(t), ...}
     return std::make_from_tuple<Struct>(std::forward<Tuple>(t));
 }
 
 
-/**
- * @brief 将一个聚合类型（如 struct）的对象转换为 std::tuple。
- */
 template <typename T>
 constexpr decltype(auto) dm_struct_to_tuple(T&& object) {
     return dm_visit_members(std::forward<T>(object),
@@ -1180,4 +1190,4 @@ constexpr decltype(auto) dm_struct_to_tuple(T&& object) {
         }
     );
 }
-#endif // __DMTYPETRAITS_REFLECTION_H_INCLUDE__
+#endif
