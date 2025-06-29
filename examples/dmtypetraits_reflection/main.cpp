@@ -15,15 +15,15 @@ struct Player {
 // 不是聚合类型（有自定义构造函数）
 struct NonAggregate {
     int x;
-    NonAggregate(int val) : x(val) {}
+    NonAggregate() {}
 };
 
 int main() {
     // 1. 获取成员数量
     std::cout << "Player has " << dm_member_count_v<Player> << " members." << std::endl;
 
-    // 下面这行会触发编译错误，因为 NonAggregate 不是聚合类型
-    // std::cout << "NonAggregate has " << dm_member_count_v<NonAggregate> << " members." << std::endl;
+    // 因为 NonAggregate 不是聚合类型, 会导致 dm_member_count_v 计算出错 = 0
+    std::cout << "NonAggregate has " << dm_member_count_v<NonAggregate> << " members." << std::endl;
 
     // 2. 遍历成员
     Player player{ 101, "brink", 99.5 };
