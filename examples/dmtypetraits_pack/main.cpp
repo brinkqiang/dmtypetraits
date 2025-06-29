@@ -76,6 +76,10 @@ int main() {
         {2, 1}                                          // version (pair)
     };
 
+    auto tuple_data = dm_struct_to_tuple(original_data);
+
+    auto new_ComplexData = dm_tuple_to_struct<ComplexData>(tuple_data);
+
     // 3. 序列化对象
     std::cout << "--- Serializing ComplexData object ---" << std::endl;
     std::vector<char> buffer = dm::pack::serialize(original_data);
