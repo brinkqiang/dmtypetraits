@@ -840,7 +840,7 @@ namespace dm::pack {
                 bool stop = false;
                 std::errc code{};
                 using I_SEQ = dm_make_index_sequence<sizeof...(Args)>;
-                auto l = { [this, &stop, &code, &field](auto &&... I_items) {
+                auto l = {[&](auto &&... I_items) {
                   auto ll = {[this, &stop, &code, &field](auto i, auto&& item) {
                     if (!stop) {
                       stop = set_value<decltype(i)::value, FiledIndex>(code, field, item);
