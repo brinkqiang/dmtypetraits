@@ -13,10 +13,10 @@ jobs:
     strategy:
       matrix:
         config:
-          - os: windows-latest
+          - os: windows-2019
             compiler: msvc2019
             vcpkg_triplet: x64-windows
-          - os: windows-latest
+          - os: windows-2022
             compiler: msvc2022
             vcpkg_triplet: x64-windows            
           - os: windows-latest
