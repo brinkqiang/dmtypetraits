@@ -1,4 +1,4 @@
-#ifndef __DMTYPETRAITS_MD5_H_INCLUDE__
+ï»¿#ifndef __DMTYPETRAITS_MD5_H_INCLUDE__
 #define __DMTYPETRAITS_MD5_H_INCLUDE__
 
 #include <algorithm>
@@ -15,26 +15,26 @@ namespace dm::pack {
         template <typename CharType, std::size_t Size>
         struct string_literal : public std::array<CharType, Size + 1> {
         private:
-            // Ë½ÓĞ¹¹Ôìº¯Êı£¬Ê¹ÓÃ C++14/17 µÄ index_sequence ¼¼ÊõÔÚ±àÒëÆÚ³õÊ¼»¯»ùÀà
+            // ç§æœ‰æ„é€ å‡½æ•°ï¼Œä½¿ç”¨ C++14/17 çš„ index_sequence æŠ€æœ¯åœ¨ç¼–è¯‘æœŸåˆå§‹åŒ–åŸºç±»
             template <std::size_t... I>
             constexpr string_literal(const CharType(&value)[Size + 1], std::index_sequence<I...>)
-                : std::array<CharType, Size + 1>{ value[I]... } // Ö±½ÓÔÚ³õÊ¼»¯ÁĞ±íÖĞÕ¹¿ªÔªËØ
+                : std::array<CharType, Size + 1>{ value[I]... } // ç›´æ¥åœ¨åˆå§‹åŒ–åˆ—è¡¨ä¸­å±•å¼€å…ƒç´ 
             {
             }
 
         public:
             using base = std::array<CharType, Size + 1>;
 
-            // ¹«¿ªµÄ constexpr ¹¹Ôìº¯Êı£¬½«³õÊ¼»¯Î¯ÍĞ¸øË½ÓĞ¹¹Ôìº¯Êı
+            // å…¬å¼€çš„ constexpr æ„é€ å‡½æ•°ï¼Œå°†åˆå§‹åŒ–å§”æ‰˜ç»™ç§æœ‰æ„é€ å‡½æ•°
             constexpr string_literal(const CharType(&value)[Size + 1])
                 : string_literal(value, std::make_index_sequence<Size + 1>())
             {
             }
 
-            // Îª operator+ ºÍÆäËû²Ù×÷Ìá¹©Ä¬ÈÏ¹¹Ôìº¯Êı
+            // ä¸º operator+ å’Œå…¶ä»–æ“ä½œæä¾›é»˜è®¤æ„é€ å‡½æ•°
             constexpr string_literal() = default;
 
-            // --- ±£ÁôÔ­Ê¼½Ó¿Ú ---
+            // --- ä¿ç•™åŸå§‹æ¥å£ ---
             constexpr std::size_t size() const { return Size; }
             constexpr bool empty() const { return !Size; }
             using base::begin;
@@ -51,24 +51,24 @@ namespace dm::pack {
             using base::rend;
         };
 
-        // ÍÆµ¼Ö¸Òı±£³Ö²»±ä
+        // æ¨å¯¼æŒ‡å¼•ä¿æŒä¸å˜
         template <typename CharType, std::size_t Size>
         string_literal(const CharType(&value)[Size])
             -> string_literal<CharType, Size - 1>;
 
-        // ÓÃÓÚÆ´½ÓµÄ¸¨Öúº¯Êı
+        // ç”¨äºæ‹¼æ¥çš„è¾…åŠ©å‡½æ•°
         template <typename CharType, size_t Len1, size_t Len2, std::size_t... I1, std::size_t... I2>
         constexpr auto concat_impl(string_literal<CharType, Len1> str1,
             string_literal<CharType, Len2> str2,
             std::index_sequence<I1...>,
             std::index_sequence<I2...>) {
-            // ÔÚ±àÒëÆÚ´´½¨Ò»¸öĞÂµÄC·ç¸ñÊı×é
+            // åœ¨ç¼–è¯‘æœŸåˆ›å»ºä¸€ä¸ªæ–°çš„Cé£æ ¼æ•°ç»„
             CharType new_arr[Len1 + Len2 + 1] = { str1[I1]..., str2[I2]..., '\0' };
-            // Ê¹ÓÃĞÂÊı×é¹¹Ôì string_literal
+            // ä½¿ç”¨æ–°æ•°ç»„æ„é€  string_literal
             return string_literal<CharType, Len1 + Len2>(new_arr);
         }
 
-        // ÖØĞ´ operator+ ÒÔÈ·±£ÍêÈ«µÄ constexpr ¼æÈİĞÔ
+        // é‡å†™ operator+ ä»¥ç¡®ä¿å®Œå…¨çš„ constexpr å…¼å®¹æ€§
         template <typename CharType, size_t Len1, size_t Len2>
         constexpr decltype(auto) operator+(string_literal<CharType, Len1> str1,
             string_literal<CharType, Len2> str2) {
