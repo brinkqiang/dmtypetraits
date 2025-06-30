@@ -292,7 +292,24 @@ namespace dmcast
             for (const auto &item : from)
             {
                 if (!first) result += ",";
-                result += lexical_cast<std::string>(item);
+
+                using ValueType = std::decay_t<decltype(item)>;
+
+                if constexpr (std::is_same_v<ValueType, std::string> ||
+                    std::is_same_v<ValueType, const char*>)
+                {
+                    // 如果值的类型是 std::string 或 const char*，则给它加上双引号
+                    result += "\"";
+                    result += item;
+                    result += "\"";
+                }
+                else
+                {
+                    // 对于其他类型（如 int, double, bool），直接使用 lexical_cast
+                    // 假设这些类型的 lexical_cast 特化版本不会添加引号
+                    result += lexical_cast<std::string>(item);
+                }
+
                 first = false;
             }
             result += close;
@@ -308,7 +325,23 @@ namespace dmcast
             for (const auto &item : from)
             {
                 if (!first) result += ",";
-                result += lexical_cast<std::string>(item);
+                using ValueType = std::decay_t<decltype(item)>;
+
+                if constexpr (std::is_same_v<ValueType, std::string> ||
+                    std::is_same_v<ValueType, const char*>)
+                {
+                    // 如果值的类型是 std::string 或 const char*，则给它加上双引号
+                    result += "\"";
+                    result += item;
+                    result += "\"";
+                }
+                else
+                {
+                    // 对于其他类型（如 int, double, bool），直接使用 lexical_cast
+                    // 假设这些类型的 lexical_cast 特化版本不会添加引号
+                    result += lexical_cast<std::string>(item);
+                }
+
                 first = false;
             }
             result += "}";
@@ -324,9 +357,28 @@ namespace dmcast
             for (const auto &pair : from)
             {
                 if (!first) result += ",";
+                result += "\"";
                 result += lexical_cast<std::string>(pair.first);
-                result += ":";
-                result += lexical_cast<std::string>(pair.second);
+                result += "\": ";
+
+                // --- 处理值 (Value) ---
+                // 使用 if constexpr 判断 pair.second 的类型
+                using ValueType = std::decay_t<decltype(pair.second)>;
+
+                if constexpr (std::is_same_v<ValueType, std::string> ||
+                    std::is_same_v<ValueType, const char*>)
+                {
+                    // 如果值的类型是 std::string 或 const char*，则给它加上双引号
+                    result += "\"";
+                    result += pair.second;
+                    result += "\"";
+                }
+                else
+                {
+                    // 对于其他类型（如 int, double, bool），直接使用 lexical_cast
+                    // 假设这些类型的 lexical_cast 特化版本不会添加引号
+                    result += lexical_cast<std::string>(pair.second);
+                }
                 first = false;
             }
             result += "}";

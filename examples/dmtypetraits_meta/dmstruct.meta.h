@@ -68,7 +68,19 @@ struct Converter<std::string, MyStruct>
             result += "\"";
             result += name;
             result += "\": ";
-            result += dmcast::lexical_cast<std::string>(value);
+            using ValueType = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<ValueType, std::string> ||
+                std::is_same_v<ValueType, const char*>)
+            {
+                result += "\"";
+                result += value;
+                result += "\"";
+            }
+            else
+            {
+                result += lexical_cast<std::string>(value);
+            }
             first = false;
         });
         result += "}";
@@ -90,7 +102,19 @@ struct Converter<std::string, Metadata>
             result += "\"";
             result += name;
             result += "\": ";
-            result += dmcast::lexical_cast<std::string>(value);
+            using ValueType = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<ValueType, std::string> ||
+                std::is_same_v<ValueType, const char*>)
+            {
+                result += "\"";
+                result += value;
+                result += "\"";
+            }
+            else
+            {
+                result += lexical_cast<std::string>(value);
+            }
             first = false;
         });
         result += "}";
@@ -112,7 +136,19 @@ struct Converter<std::string, ComplexData>
             result += "\"";
             result += name;
             result += "\": ";
-            result += dmcast::lexical_cast<std::string>(value);
+            using ValueType = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<ValueType, std::string> ||
+                std::is_same_v<ValueType, const char*>)
+            {
+                result += "\"";
+                result += value;
+                result += "\"";
+            }
+            else
+            {
+                result += lexical_cast<std::string>(value);
+            }
             first = false;
         });
         result += "}";

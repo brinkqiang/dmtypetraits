@@ -2,6 +2,7 @@
 #include "dmfix_win_utf8.h"
 #include "dmstruct.meta.h"
 
+#include "dmjson.h"
 
 int main() {
 
@@ -53,6 +54,22 @@ int main() {
         {{"property1", 10}, {"property2", 20}},
         {0.1f, 0.2f, 0.3f}, {{"jerry", 1347}}
     };
+
+    std::string json_str = dmcast::lexical_cast<std::string>(data);
+
+    try
+    {
+        // 将解析代码放入 try 块
+        nlohmann::json json = nlohmann::json::parse(json_str);
+        // 只有在解析成功后，这行代码才会被执行
+        std::cout << "解析成功，格式化输出:\n" << json.dump(4) << std::endl;
+    }
+    catch (const nlohmann::json::parse_error& e)
+    {
+        // 如果解析失败，捕获异常并打印错误信息
+        std::cerr << "JSON 解析失败!\n";
+        std::cerr << "错误信息: " << e.what() << std::endl;
+    }
 
     std::cout << "\n--- 5. 复杂数据结构处理 ---\n";
     std::cout << "遍历对象 '" << dm::refl::get_class_name<ComplexData>() << "':\n";
