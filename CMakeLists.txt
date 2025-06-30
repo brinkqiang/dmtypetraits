@@ -24,14 +24,17 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 if(MSVC)
     add_definitions(/Zc:__cplusplus)
 endif()
+
+enable_testing()
+
 ModuleImportAll("thirdparty")
 
 InterfaceImport("libdmtypetraits" "src/libdmtypetraits" "")
 
 if(PROJECT_IS_TOP_LEVEL)
-    ExeImport("test" "libdmtypetraits;dmtest")
+    ExeImportAndTest("test" "libdmtypetraits;dmtest")
 
-    ExeImport("examples" "libdmtypetraits")
+    ExeImportAndTest("examples" "libdmtypetraits")
 endif()
 
 AddInstall("libdmtypetraits" "${CMAKE_CURRENT_SOURCE_DIR}/include")
