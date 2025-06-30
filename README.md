@@ -112,6 +112,8 @@ int main() {
 
 这套API功能更强大，依赖于一个描述结构体信息的元数据文件（例如 `dmstruct.meta.h`）。它提供了对字段名、类型名和动态访问的支持。
 
+元数据文件 通过dmgen4meta --PKG=dmstruct.pkg生成. 具体可参考 ./examples/dmtypetraits_meta 
+
 ```cpp
 // 假设 dmstruct.meta.h 定义了 ComplexData
 #include "dmstruct.meta.h"
