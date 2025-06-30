@@ -22,7 +22,7 @@ Copyright (c) 2013-2018 brinkqiang (brink.qiang@gmail.com)
 [win-link]:  https://github.com/brinkqiang/dmtypetraits/actions/workflows/win.yml "win build status"
 
 ## Intro
-dmtypetraits
+dmtypetraits 是一个纯头文件C++17的库 
 ```cpp
 ```
 ## Contacts
