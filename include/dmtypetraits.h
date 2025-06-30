@@ -21,33 +21,38 @@
 #ifndef __DMTYPETRAITS_H_INCLUDE__
 #define __DMTYPETRAITS_H_INCLUDE__
 
-/**
- * @file dmtypetraits.h
- * @brief 模板元编程库 (Template Metaprogramming Library) 的统一入口。
- *
- * 包含了所有核心的类型萃取、类型列表和元编程工具。
- * 使用者只需包含此头文件即可使用库的全部功能。
- */
+/*
+#### 模块架构
 
-// 包含顺序建议从底层依赖到高层功能，有助于理解架构。
+文件内的包含顺序遵循了从底层依赖到高层功能的建议架构，有助于理解整个库的组织方式。
 
-// 1. 基础层：对标准库 <type_traits> 的封装
+* **1. 基础层 (Base Layer)**
+    * `dmtypetraits_base.h`: 封装了标准库 `<type_traits>` 的基础功能。
+
+* **2. 核心层 (Core Layer)**
+    * `dmtypetraits_core.h`: 提供了基于 SFINAE（Substitution Failure Is Not An Error）的复合类型萃取。
+
+* **3. 扩展层 (Extension Layer)**
+    * `dmtypetraits_extensions.h`: 包含了更复杂的复合类型萃取和其它实用工具。
+
+* **4. 功能模块 (Feature Modules)**
+    * `dmtypetraits_logical.h`: 提供编译期的逻辑组合工具。
+    * `dmtypetraits_function.h`: 用于萃取函数（包括普通函数、Lambda、成员函数等）的属性，如返回类型和参数类型。
+    * `dmtypetraits_typelist.h`: 提供类型列表相关的元编程工具。
+    * `dmtypetraits_md5.h`: 提供 MD5 哈希计算功能，主要用于序列化模块中的类型校验。
+    * `dmtypetraits_reflection.h`: 提供无侵入式的编译期反射功能。
+    * `dmtypetraits_reflection_intrusive.h`: 提供侵入式的编译期反射功能。
+    * `dmtypetraits_pack.h`: 提供高性能的二进制序列化和反序列化功能。     
+*/
+
 #include "dmtypetraits_base.h"
-
-// 2. 核心层：基于 SFINAE 的复合类型萃取
 #include "dmtypetraits_core.h"
-
-// 3. 扩展层：更复杂的复合萃取和实用工具
 #include "dmtypetraits_extensions.h"
-
-// 4. 功能模块：
-#include "dmtypetraits_logical.h"       // 逻辑组合工具
-#include "dmtypetraits_function.h"      // 函数萃取
-#include "dmtypetraits_typelist.h"      // 类型列表工具
-
-#include "dmtypetraits_md5.h"           // MD5
-#include "dmtypetraits_reflection.h"    // 反射
-
-#include "dmtypetraits_pack.h"
+#include "dmtypetraits_logical.h"
+#include "dmtypetraits_function.h"
+#include "dmtypetraits_typelist.h"
+#include "dmtypetraits_md5.h"
+#include "dmtypetraits_reflection.h"
 #include "dmtypetraits_reflection_intrusive.h"
+#include "dmtypetraits_pack.h"
 #endif // __DMTYPETRAITS_H_INCLUDE__
