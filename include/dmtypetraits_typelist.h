@@ -21,7 +21,7 @@
 #ifndef __DMTYPETRAITS_TYPELIST_H_INCLUDE__
 #define __DMTYPETRAITS_TYPELIST_H_INCLUDE__
 
-#include "dmbase_typetraits.h"
+#include "dmtypetraits_base.h"
 #include "dmtypetraits_logical.h"
 #include "dmtypetraits_extensions.h"
 #include <tuple>

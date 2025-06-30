@@ -32,10 +32,10 @@
 // 包含顺序建议从底层依赖到高层功能，有助于理解架构。
 
 // 1. 基础层：对标准库 <type_traits> 的封装
-#include "dmbase_typetraits.h"
+#include "dmtypetraits_base.h"
 
 // 2. 核心层：基于 SFINAE 的复合类型萃取
-#include "dmcore_typetraits.h"
+#include "dmtypetraits_core.h"
 
 // 3. 扩展层：更复杂的复合萃取和实用工具
 #include "dmtypetraits_extensions.h"

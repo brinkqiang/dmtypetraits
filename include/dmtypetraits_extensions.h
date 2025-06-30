@@ -21,7 +21,7 @@
 #ifndef __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 #define __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
 
-#include "dmcore_typetraits.h"
+#include "dmtypetraits_core.h"
 #include <tuple>
 #include <array>
 #include <string_view>

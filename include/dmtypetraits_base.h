@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __DMBASE_TYPETRAITS_H_INCLUDE__
-#define __DMBASE_TYPETRAITS_H_INCLUDE__
+#ifndef __DMTYPETRAITS_BASE_H_INCLUDE__
+#define __DMTYPETRAITS_BASE_H_INCLUDE__
 
 #include <type_traits>
 #include <utility>
@@ -219,4 +219,4 @@ using dm_remove_cvref_t = dm_remove_cv_t<dm_remove_reference_t<T>>;
 
 #endif // __cplusplus >= 202002L
 
-#endif // __DMBASE_TYPETRAITS_H_INCLUDE__
+#endif // __DMTYPETRAITS_BASE_H_INCLUDE__

@@ -1,7 +1,7 @@
-﻿#ifndef __DMCORE_TYPETRAITS_H_INCLUDE__
-#define __DMCORE_TYPETRAITS_H_INCLUDE__
+﻿#ifndef __DMTYPETRAITS_CORE_H_INCLUDE__
+#define __DMTYPETRAITS_CORE_H_INCLUDE__
 
-#include "dmbase_typetraits.h" // 引入我们定义的基础类型萃取
+#include "dmtypetraits_base.h" // 引入我们定义的基础类型萃取
 #include <string_view> // 用于 dm_is_string_like_v
 
 //-----------------------------------------------------------------------------
@@ -113,4 +113,4 @@ inline constexpr bool dm_is_string_like_v = dm_is_convertible_v<const T&, std::s
 template<typename T>
 inline constexpr bool dm_is_pointer_like_v = dm_is_dereferenceable_v<T> && (dm_is_pointer_v<T> || dm_has_arrow_operator_v<T>);
 
-#endif // __DMCORE_TYPETRAITS_H_INCLUDE__
+#endif // __DMTYPETRAITS_CORE_H_INCLUDE__
