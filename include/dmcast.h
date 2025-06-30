@@ -39,7 +39,7 @@
 #include <forward_list>
 #include <iomanip>
 #include <iostream>
-
+#include <variant>
 namespace dmcast
 {
     // 前向声明
