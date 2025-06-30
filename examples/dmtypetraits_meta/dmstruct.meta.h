@@ -7,31 +7,13 @@
 #ifndef __DM_META_DMSTRUCT_H__
 #define __DM_META_DMSTRUCT_H__
 
-#include <tuple>
-#include <utility>
-#include <string>
-
-// Include dmcast and the intrusive reflection header to use their tools
 #include "dmtypetraits.h"
 #include "dmcast.h"
 
 #include "dmstruct_test.h"
 
-// Forward declaration of the lexical_cast for cross-use
-namespace dmcast {
-    template <typename To, typename From>
-    typename std::enable_if<!std::is_same<To, From>::value, To>::type
-    lexical_cast(const From &from);
-}
-
 namespace dm {
 namespace refl {
-
-// Base template for reflection traits
-template<typename T>
-struct traits {
-    static constexpr bool is_reflected = false;
-};
 
 // Reflection traits specialization for MyStruct
 template<>
@@ -70,7 +52,6 @@ struct traits<ComplexData> {
 } // namespace refl
 } // namespace dm
 
-// Provide specializations for dmcast to handle reflected structs
 namespace dmcast {
 // Converter specialization to convert MyStruct to std::string
 template<>
@@ -80,16 +61,13 @@ struct Converter<std::string, MyStruct>
     {
         std::string result = "{";
         bool first = true;
-        // Use the reflection utility to visit members
         dm::refl::dm_visit_members(from, [&](const char* name, auto&& value) {
             if (!first) {
-                result += ",";
+                result += ", ";
             }
-            // Format as "name":value
             result += "\"";
             result += name;
-            result += "\":";
-            // Recursively call lexical_cast to convert member's value to string
+            result += "\": ";
             result += dmcast::lexical_cast<std::string>(value);
             first = false;
         });
@@ -105,16 +83,13 @@ struct Converter<std::string, Metadata>
     {
         std::string result = "{";
         bool first = true;
-        // Use the reflection utility to visit members
         dm::refl::dm_visit_members(from, [&](const char* name, auto&& value) {
             if (!first) {
-                result += ",";
+                result += ", ";
             }
-            // Format as "name":value
             result += "\"";
             result += name;
-            result += "\":";
-            // Recursively call lexical_cast to convert member's value to string
+            result += "\": ";
             result += dmcast::lexical_cast<std::string>(value);
             first = false;
         });
@@ -130,16 +105,13 @@ struct Converter<std::string, ComplexData>
     {
         std::string result = "{";
         bool first = true;
-        // Use the reflection utility to visit members
         dm::refl::dm_visit_members(from, [&](const char* name, auto&& value) {
             if (!first) {
-                result += ",";
+                result += ", ";
             }
-            // Format as "name":value
             result += "\"";
             result += name;
-            result += "\":";
-            // Recursively call lexical_cast to convert member's value to string
+            result += "\": ";
             result += dmcast::lexical_cast<std::string>(value);
             first = false;
         });

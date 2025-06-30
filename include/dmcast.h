@@ -224,6 +224,7 @@ namespace dmcast
         }
     };
 
+
     template <typename From>
     struct Converter<std::string, From>
     {
