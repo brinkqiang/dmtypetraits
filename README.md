@@ -32,6 +32,7 @@ Copyright (c) 2013-2018 brinkqiang (brink.qiang@gmail.com)
   * **Windows**:
 
       * MSVC: `19.44.35209.0`
+      * MSVC: `19.29.30159.0`
       * Clang: `19.1.5`
 
   * **Linux**:
