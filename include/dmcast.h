@@ -37,6 +37,8 @@
 #include <queue>
 #include <stack>
 #include <forward_list>
+#include <iomanip>
+#include <iostream>
 
 namespace dmcast
 {
