@@ -159,12 +159,6 @@ constexpr void visit_fields_impl(T&& obj, Visitor&& visitor, Fields&& fields, st
     (visitor(std::get<Is>(fields), std::get<Is>(fields).get(obj)), ...);
 }
 
-template<typename T>
-constexpr auto find_field(std::string_view name) {
-    constexpr auto fields = type_info<T>::fields();
-    return find_field_impl<T>(name, fields, std::make_index_sequence<std::tuple_size_v<decltype(fields)>>{});
-}
-
 template<typename T, typename Fields, size_t... Is>
 constexpr auto find_field_impl(std::string_view name, Fields&& fields, std::index_sequence<Is...>) {
     using FieldType = std::decay_t<decltype(std::get<0>(fields))>;
@@ -178,6 +172,12 @@ constexpr auto find_field_impl(std::string_view name, Fields&& fields, std::inde
 
     (check_field(std::get<Is>(fields)), ...);
     return result;
+}
+
+template<typename T>
+constexpr auto find_field(std::string_view name) {
+    constexpr auto fields = type_info<T>::fields();
+    return find_field_impl<T>(name, fields, std::make_index_sequence<std::tuple_size_v<decltype(fields)>>{});
 }
 
 template<size_t Index, typename T>
