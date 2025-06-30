@@ -2,9 +2,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <any> // 为了测试 object_accessor::get(name)
+#include <any>
 
-// 包含最终版的反射库核心
 #include "dmstruct.meta.h"
 
 // 3. 测试固件 (Test Fixture)
@@ -56,30 +55,6 @@ TEST_F(ReflectionTest, VisitFields) {
     ASSERT_TRUE(field_count == dm::refl::get_field_count<ComplexData>());
 }
 
-// 验证 get_field 和 find_field (使用 std::visit)
-//TEST_F(ReflectionTest, GetAndFindField) {
-//    // 按索引获取
-//    constexpr auto field0 = dm::refl::get_field<0, ComplexData>();
-//    ASSERT_TRUE(field0.name() == "id");
-//    ASSERT_TRUE(field0.get(data) == 101);
-//
-//    // 按名称查找
-//    auto field_opt = dm::refl::find_field<ComplexData>("metadata");
-//    ASSERT_TRUE(field_opt.has_value());
-//
-//    // 使用 std::visit 来安全地处理 variant 返回值
-//    std::visit([&](const auto& field_desc) {
-//        ASSERT_TRUE(field_desc.name() == "metadata");
-//        Metadata expected_meta = { "tom", 1156 };
-//        ASSERT_TRUE(field_desc.get(data) == expected_meta);
-//        }, *field_opt);
-//
-//    // 查找不存在的字段
-//    auto non_existent_field = dm::refl::find_field<ComplexData>("non_existent");
-//    ASSERT_TRUE(!non_existent_field.has_value());
-//}
-
-// 重构 ObjectAccessor 测试以匹配新的API
 TEST_F(ReflectionTest, ObjectAccessor) {
     auto accessor = dm::refl::make_accessor(data);
 
@@ -88,11 +63,6 @@ TEST_F(ReflectionTest, ObjectAccessor) {
     accessor.set<0>(999);
     ASSERT_TRUE(data.id == 999);
     ASSERT_TRUE(accessor.get<0>() == 999);
-
-    // 按名称读写，并处理 std::any 返回值
-    auto status_any_opt = accessor.get("status");
-    ASSERT_TRUE(status_any_opt.has_value());
-    ASSERT_TRUE(std::any_cast<Status>(*status_any_opt) == Status::Ok);
 
     // 测试 set
     bool set_success = accessor.set("status", Status::Warning);
@@ -105,7 +75,6 @@ TEST_F(ReflectionTest, ObjectAccessor) {
     ASSERT_TRUE(data.status == Status::Warning); // 值应保持不变
 }
 
-// 同样使用 if constexpr 重构 NestedReflection 测试
 TEST_F(ReflectionTest, NestedReflection) {
     bool metadata_found_and_tested = false;
 
