@@ -95,6 +95,15 @@ namespace dm::pack {
             monostate_t = 253, aggregate_class_t = 254, type_end_flag = 255,
         };
 
+        //
+        // --- BEGIN: 已应用的修复 ---
+        //
+        // 将常量定义提升到函数外部
+        constexpr auto type_end_literal = string_literal<char, 1>{ {static_cast<char>(type_id::type_end_flag)} };
+        //
+        // --- END: 已应用的修复 ---
+        //
+
         template <typename T>
         constexpr type_id get_integral_type() {
             if constexpr (dm_is_same_v<int32_t, T>) { return type_id::int32_t; }
@@ -198,16 +207,28 @@ namespace dm::pack {
             if constexpr (id == type_id::aggregate_class_t) {
                 using Args = decltype(get_types(Arg{}));
                 constexpr auto body = get_type_literal_impl<Args, Arg>(dm_make_index_sequence<std::tuple_size_v<Args>>());
-                constexpr auto end = string_literal<char, 1>{ {static_cast<char>(type_id::type_end_flag)} };
-                return ret + body + end;
+                //
+                // --- BEGIN: 已应用的修复 ---
+                //
+                // 使用命名空间级的常量
+                return ret + body + type_end_literal;
+                //
+                // --- END: 已应用的修复 ---
+                //
             }
             else if constexpr (id == type_id::variant_t) {
                 constexpr auto sz = std::variant_size_v<Arg>;
                 static_assert(sz > 0, "empty param of std::variant is not allowed!");
                 static_assert(sz < 256, "too many alternative type in variant!");
                 constexpr auto body = get_variant_literal_impl<Arg>(dm_make_index_sequence<std::variant_size_v<Arg>>());
-                constexpr auto end = string_literal<char, 1>{ {static_cast<char>(type_id::type_end_flag)} };
-                return ret + body + end;
+                //
+                // --- BEGIN: 已应用的修复 ---
+                //
+                // 使用命名空间级的常量
+                return ret + body + type_end_literal;
+                //
+                // --- END: 已应用的修复 ---
+                //
             }
             else if constexpr (id == type_id::array_t) {
                 constexpr auto sz = dm_get_array_size_v<Arg>;
@@ -839,7 +860,7 @@ namespace dm::pack {
                 bool stop = false;
                 std::errc code{};
                 using I_SEQ = dm_make_index_sequence<sizeof...(Args)>;
-                auto l = {[&](auto &&... I_items) {
+                auto l = { [&](auto &&... I_items) {
                   auto ll = {[this, &stop, &code, &field](auto i, auto&& item) {
                     if (!stop) {
                       stop = set_value<decltype(i)::value, FiledIndex>(code, field, item);
