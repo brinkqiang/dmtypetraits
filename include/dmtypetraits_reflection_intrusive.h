@@ -259,6 +259,11 @@ auto make_accessor(T& obj) {
     return object_accessor<T>(obj);
 }
 
+template <typename FieldType>
+constexpr size_t get_field_index() {
+    return std::decay_t<FieldType>::index;
+}
+
 } // namespace dm::refl
 
 #endif // __DMTYPETRAITS_REFLECTION_INTRUSIVE_H_INCLUDE__

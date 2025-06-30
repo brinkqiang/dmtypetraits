@@ -36,11 +36,11 @@ TEST_F(ReflectionTest, VisitFields) {
     int field_count = 0;
     dm::refl::visit_fields(data, [&](const auto& field, const auto& value) {
         field_count++;
-        if constexpr (std::decay_t<decltype(field)>::index == 0) { // id
+        if constexpr (dm::refl::get_field_index<decltype(field)>() == 0) { // id
             ASSERT_EQ(field.name(), "id");
             ASSERT_EQ(value, 101);
         }
-        else if constexpr (std::decay_t<decltype(field)>::index == 1) { // status
+        else if constexpr (dm::refl::get_field_index<decltype(field)>() == 1) { // status
             ASSERT_EQ(field.name(), "status");
             ASSERT_EQ(value, Status::Ok);
         }
@@ -72,12 +72,12 @@ TEST_F(ReflectionTest, ObjectAccessor) {
 TEST_F(ReflectionTest, NestedReflection) {
     bool metadata_found_and_tested = false;
     dm::refl::visit_fields(data, [&](const auto& field, const auto& value) {
-        if constexpr (std::decay_t<decltype(field)>::index == 2) { // metadata
+        if constexpr (dm::refl::get_field_index<decltype(field)>() == 2) { // metadata
             using ValueType = std::decay_t<decltype(value)>;
             if constexpr (dm::refl::is_reflectable_v<ValueType>) {
                 metadata_found_and_tested = true;
                 dm::refl::visit_fields(value, [&](const auto& inner_field, const auto& inner_value) {
-                    if constexpr (std::decay_t<decltype(inner_field)>::index == 0) { // author
+                    if constexpr (dm::refl::get_field_index<decltype(field)>() == 0) { // author
                          ASSERT_EQ(inner_field.name(), "author");
                          ASSERT_EQ(inner_value, "tom");
                     }
