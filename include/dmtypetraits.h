@@ -41,12 +41,13 @@
 #include "dmtypetraits_extensions.h"
 
 // 4. 功能模块：
-#include "dmtypetraits_logical.h"   // 逻辑组合工具
-#include "dmtypetraits_function.h"  // 函数萃取
-#include "dmtypetraits_typelist.h"    // 类型列表工具
+#include "dmtypetraits_logical.h"       // 逻辑组合工具
+#include "dmtypetraits_function.h"      // 函数萃取
+#include "dmtypetraits_typelist.h"      // 类型列表工具
 
-#include "dmtypetraits_md5.h"
-#include "dmtypetraits_reflection.h"
+#include "dmtypetraits_md5.h"           // MD5
+#include "dmtypetraits_reflection.h"    // 反射
+
 #include "dmtypetraits_pack.h"
 #include "dmtypetraits_reflection_intrusive.h"
 #endif // __DMTYPETRAITS_H_INCLUDE__
