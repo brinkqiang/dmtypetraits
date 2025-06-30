@@ -5,12 +5,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <utility> // Required for std::index_sequence
+#include <utility>
 
 namespace dm::pack {
     namespace detail {
-
-        // --- MODIFICATION START ---
 
         template <typename CharType, std::size_t Size>
         struct string_literal : public std::array<CharType, Size + 1> {

@@ -151,8 +151,16 @@ constexpr size_t get_field_count() {
 }
 
 template<typename T, typename Visitor, typename Fields, size_t... Is>
-constexpr void visit_fields_impl(T&& obj, Visitor&& visitor, Fields&& fields, std::index_sequence<Is...>) {
-    (visitor(std::get<Is>(fields), std::get<Is>(fields).get(obj)), ...);
+constexpr void visit_fields_impl(T&& obj, Visitor&& visitor, Fields&& /*fields*/, std::index_sequence<Is...>) {
+    auto visit_one = [&](auto index_constant) {
+        constexpr size_t i = index_constant.value;
+
+        constexpr auto field = std::get<i>(type_info<std::decay_t<T>>::fields());
+
+        visitor(field, field.get(obj));
+        };
+
+    (visit_one(std::integral_constant<size_t, Is>{}), ...);
 }
 
 template<typename T, typename Visitor>
