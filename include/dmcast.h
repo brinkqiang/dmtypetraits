@@ -281,26 +281,7 @@ namespace dmcast
             return from;
         }
     };
-    namespace detail
-    {
-        template <typename T>
-        std::string to_utf8_string(T&& path_result)
-        {
-            using U = std::decay_t<T>;
 
-            if constexpr (std::is_same_v<U, std::string>)
-            {
-                return std::forward<T>(path_result);
-            }
-            else
-            {
-                return std::string(
-                    reinterpret_cast<const char*>(path_result.c_str()),
-                    path_result.length()
-                );
-            }
-        }
-    }
     template <>
     struct Converter<std::wstring, std::string>
     {
@@ -325,7 +306,7 @@ namespace dmcast
     {
         static std::string convert(const std::wstring& from)
         {
-            return detail::to_utf8_string(std::filesystem::path(from).u8string());
+            return std::filesystem::path(from).string();
         }
     };
 
@@ -335,7 +316,7 @@ namespace dmcast
         static std::string convert(const wchar_t* from)
         {
             if (!from) return "";
-            return detail::to_utf8_string(std::filesystem::path(from).u8string());
+            return std::filesystem::path(from).string();
         }
     };
 
