@@ -101,7 +101,7 @@ int main() {
 
 
     // --- 示例1: 从 string 转换为 wstring ---
-    std::string utf8_str = u8"你好世界, Hello from C++17! 🚀";
+    std::string utf8_str = "你好世界, Hello from C++17! 🚀";
     std::wstring wide_str = dmcast::lexical_cast<std::wstring>(utf8_str);
 
     std::cout << "Original std::string (UTF-8): " << utf8_str << std::endl;
