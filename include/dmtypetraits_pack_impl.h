@@ -805,7 +805,7 @@ namespace dm::pack {
                 }
                 else if constexpr (dm_is_variant_v<type>) {
                     if (pos_ + sizeof(uint32_t) > size_) [[unlikely]] { return std::errc::no_buffer_space; }
-                    uint32_t index;
+                    uint32_t index = 0;
                     std::memcpy(&index, data_ + pos_, sizeof(index));
                     pos_ += sizeof(index);
                     if (index >= std::variant_size_v<type>) [[unlikely]] { return std::errc::invalid_argument; }

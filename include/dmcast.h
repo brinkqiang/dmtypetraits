@@ -40,6 +40,8 @@
 #include <iomanip>
 #include <iostream>
 #include <variant>
+#include <filesystem>
+
 namespace dmcast
 {
     // 前向声明
@@ -277,6 +279,61 @@ namespace dmcast
         static std::string convert(const char (&from)[N])
         {
             return from;
+        }
+    };
+
+    /**
+     * @brief 将 std::string (假定为 UTF-8) 转换为 std::wstring.
+     */
+    template <>
+    struct Converter<std::wstring, std::string>
+    {
+        static std::wstring convert(const std::string& from)
+        {
+            // 利用 path 的构造函数将 UTF-8 string 转为内部表示，
+            // 然后用 .wstring() 方法获得平台原生的宽字符串。
+            return std::filesystem::path(from).wstring();
+        }
+    };
+
+    /**
+     * @brief 将 const char* (假定为 UTF-8) 转换为 std::wstring.
+     */
+    template <>
+    struct Converter<std::wstring, const char*>
+    {
+        static std::wstring convert(const char* from)
+        {
+            if (!from) return L"";
+            return std::filesystem::path(from).wstring();
+        }
+    };
+    
+    /**
+     * @brief 将 std::wstring 转换为 std::string (UTF-8 编码).
+     */
+    template <>
+    struct Converter<std::string, std::wstring>
+    {
+        static std::string convert(const std::wstring& from)
+        {
+            // 使用 .u8string() 来确保无论在哪个平台，
+            // 输出的 std::string 都是 UTF-8 编码，这是最安全和可移植的做法。
+            // 避免使用 .string()，因为它在 Windows 上可能转为 ANSI 代码页，导致信息丢失。
+            return std::filesystem::path(from).u8string();
+        }
+    };
+    
+    /**
+     * @brief 将 const wchar_t* 转换为 std::string (UTF-8 编码).
+     */
+    template <>
+    struct Converter<std::string, const wchar_t*>
+    {
+        static std::string convert(const wchar_t* from)
+        {
+            if (!from) return "";
+            return std::filesystem::path(from).u8string();
         }
     };
 
