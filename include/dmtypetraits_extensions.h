@@ -327,35 +327,85 @@ constexpr decltype(auto) dm_visit_variant(Variant&&, Visitor&& visitor) {
     return dm_detail::variant_helper<dm_remove_cvref_t<Variant>, Visitor>::visit(std::forward<Visitor>(visitor));
 }
 
+namespace dm_detail {
+    // 后备方案：从编译器签名中提取原始类型名称
+    template<typename T>
+    constexpr std::string_view get_raw_type_name() {
+#if defined(__clang__)
+        constexpr std::string_view prefix = "[T = ";
+        constexpr std::string_view suffix = "]";
+        constexpr std::string_view function = __PRETTY_FUNCTION__;
+        const auto start = function.find(prefix) + prefix.size();
+        const auto end = function.rfind(suffix);
+        if (start < end) {
+            return function.substr(start, (end - start));
+        }
+        return function;
+#elif defined(__GNUC__)
+        constexpr std::string_view prefix = "[with T = ";
+        constexpr std::string_view suffix = "]";
+        constexpr std::string_view function = __PRETTY_FUNCTION__;
+        const auto start = function.find(prefix) + prefix.size();
+        const auto end = function.rfind(suffix);
+        if (start < end) {
+            return function.substr(start, (end - start));
+        }
+        return function;
+#elif defined(_MSC_VER)
+        constexpr std::string_view prefix = "get_raw_type_name<"; // 注意，我们现在调用的是这个内部函数
+        constexpr std::string_view suffix = ">(void)";
+        constexpr std::string_view function = __FUNCSIG__;
+        const auto start = function.find(prefix) + prefix.size();
+        const auto end = function.rfind(suffix);
+        if (start < end) {
+            return function.substr(start, (end - start));
+        }
+        return function;
+#else
+        return "Unknown Type";
+#endif
+    }
+} // namespace dm_detail
 
-/**
- * @brief (C++17) 在编译期获取类型的易读名称字符串。
- */
 template<typename T>
 constexpr std::string_view dm_type_name() {
-#if defined(__clang__)
-    constexpr std::string_view prefix = "[T = ";
-    constexpr std::string_view suffix = "]";
-    constexpr std::string_view function = __PRETTY_FUNCTION__;
-    const auto start = function.find(prefix) + prefix.size();
-    const auto end = function.rfind(suffix);
-    return function.substr(start, (end - start));
-#elif defined(__GNUC__)
-    constexpr std::string_view prefix = "[with T = ";
-    constexpr std::string_view suffix = "]";
-    constexpr std::string_view function = __PRETTY_FUNCTION__;
-    const auto start = function.find(prefix) + prefix.size();
-    const auto end = function.rfind(suffix);
-    return function.substr(start, (end - start));
-#elif defined(_MSC_VER)
-    constexpr std::string_view prefix = "dm_type_name<";
-    constexpr std::string_view suffix = ">(void)";
-    constexpr std::string_view function = __FUNCSIG__;
-    const auto start = function.find(prefix) + prefix.size();
-    const auto end = function.rfind(suffix);
-    return function.substr(start, (end - start));
-#else
-    return "Unknown Type";
-#endif
+    // 使用 dm_pure_type_t 来获取最根本的类型，去除所有修饰符
+    using CleanT = dm_pure_type_t<T>;
+
+    // 为常用类型提供特化名称
+    if constexpr (std::is_same_v<CleanT, std::string>) {
+        return "std::string";
+    }
+    else if constexpr (std::is_same_v<CleanT, std::string_view>) {
+        return "std::string_view";
+    }
+    else if constexpr (std::is_same_v<CleanT, int>) {
+        return "int";
+    }
+    else if constexpr (std::is_same_v<CleanT, long>) {
+        return "long";
+    }
+    else if constexpr (std::is_same_v<CleanT, long long>) {
+        return "long long";
+    }
+    else if constexpr (std::is_same_v<CleanT, double>) {
+        return "double";
+    }
+    else if constexpr (std::is_same_v<CleanT, float>) {
+        return "float";
+    }
+    else if constexpr (std::is_same_v<CleanT, bool>) {
+        return "bool";
+    }
+    else if constexpr (std::is_same_v<CleanT, char>) {
+        return "char";
+    }
+    // 还可以继续添加其他你需要的类型，例如 std::vector, std::map 等
+    // ...
+    else {
+        // 如果不是我们特化的类型，则调用原始的后备方案
+        return dm_detail::get_raw_type_name<T>();
+    }
 }
+
 #endif // __DMTYPETRAITS_EXTENSIONS_H_INCLUDE__
