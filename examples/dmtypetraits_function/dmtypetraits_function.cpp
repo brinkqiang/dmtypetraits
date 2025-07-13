@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 #include <utility>
+#include <sstream>
 #include "dmfix_win.h"
 // 包含我们创建的函数萃取头文件
 #include "dmtypetraits.h"
@@ -22,58 +23,48 @@ void print_arg_types(std::index_sequence<Is...>) {
 }
 
 // --- 使用 dmtypetraits 库的【正确】实现 ---
+
+// 辅助函数，用于将参数类型列表附加到 stringstream 中
+template <typename Tuple, std::size_t... Is>
+void append_arg_types(std::stringstream& ss, std::index_sequence<Is...>) {
+    // 使用 C++17 折叠表达式，并巧妙处理逗号
+    // 只有当不是最后一个参数时，才添加 ", "
+    ( (ss << dm_type_name<std::tuple_element_t<Is, Tuple>>() << (Is == sizeof...(Is) - 1 ? "" : ", ")), ... );
+}
+
 template <typename F>
-void print_function_info(F&& func) {
+std::string get_function_signature_impl(F&& func, const char* func_name) {
     using func_t = dm_remove_cvref_t<F>;
+    using return_t = dm_function_return_t<func_t>;
     using params_t = dm_function_parameters_t<func_t>;
 
-    std::cout << "----------------------------------------\n";
+    std::stringstream ss;
 
-#if defined(__GNUC__) || defined(__clang__)
-    const char* func_sig = __PRETTY_FUNCTION__;
-#elif defined(_MSC_VER)
-    const char* func_sig = __FUNCSIG__;
-#else
-    const char* func_sig = "N/A";
-#endif
-    std::cout << "Raw Signature: " << func_sig << "\n";
-    std::cout << "\n--- Analyzed Info (using dmtypetraits) ---\n";
+    // 1. 添加返回类型和空格
+    ss << dm_type_name<return_t>() << " ";
 
-    std::cout << "Return Type: " << dm_type_name<dm_function_return_t<func_t>>() << "\n";
+    // 2. 添加从宏获取的函数名
+    ss << func_name;
 
-    // ====================================================================
-    // 核心修正部分：
-    // 我们使用 if constexpr 来处理两种情况：
-    // 1. 函数没有参数 (params_t 是 void)
-    // 2. 函数有参数 (params_t 是 std::tuple)
-    // ====================================================================
-    if constexpr (std::is_same_v<params_t, void>) {
-        // 情况1：无参数
-        std::cout << "Argument Count: 0\n";
+    // 3. 添加参数列表
+    ss << "(";
+    if constexpr (!std::is_same_v<params_t, void>) {
+        append_arg_types<params_t>(ss, std::make_index_sequence<std::tuple_size_v<params_t>>{});
     }
-    else {
-        // 情况2：有参数
-        // 关键：`std::tuple_size_v<params_t>` 本身就是一个编译期常量，可以直接使用。
-        constexpr size_t arity = std::tuple_size_v<params_t>;
-        std::cout << "Argument Count: " << arity << "\n";
+    ss << ")";
 
-        // 这里的 if constexpr 也是安全的，因为 arity 是 constexpr
-        if constexpr (arity > 0) {
-            std::cout << "Argument Types:\n";
-            // 正确：将编译期常量 arity 作为模板参数
-            print_arg_types<params_t>(std::make_index_sequence<arity>{});
-        }
-    }
-
-    std::cout << "----------------------------------------\n\n";
+    return ss.str();
 }
+
+
+#define GET_FUNCTION_SIGNATURE(func) get_function_signature_impl(&func, #func)
 
 
 // --- 开始测试 ---
 
 int main() {
-    print_function_info(&free_func_multi_arg);
-    print_function_info(&MyTestClass::member_func);
+    std::cout << GET_FUNCTION_SIGNATURE(free_func_multi_arg) << std::endl;
+    std::cout << GET_FUNCTION_SIGNATURE(MyTestClass::member_func) << std::endl;
 
     // 1. 测试带参数的普通函数
     using Func1 = decltype(free_func_multi_arg);
