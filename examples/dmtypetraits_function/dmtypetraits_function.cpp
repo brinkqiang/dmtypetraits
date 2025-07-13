@@ -73,6 +73,7 @@ void print_function_info(F&& func) {
 
 int main() {
     print_function_info(&free_func_multi_arg);
+    print_function_info(&MyTestClass::member_func);
 
     // 1. 测试带参数的普通函数
     using Func1 = decltype(free_func_multi_arg);
