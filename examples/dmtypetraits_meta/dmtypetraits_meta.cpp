@@ -99,20 +99,5 @@ int main() {
 
     std::cout << "\n-------------------------\n";
 
-    // --- 示例1: 从 string 转换为 wstring ---
-    std::string utf8_str = "你好世界, Hello from C++17! 🚀";
-    std::wstring wide_str = dmcast::lexical_cast<std::wstring>(utf8_str);
-
-    std::cout << "Original std::string (UTF-8): " << utf8_str << std::endl;
-    std::wcout << L"Converted std::wstring: " << wide_str << std::endl;
-
-    std::cout << "\n----------------------------------------\n" << std::endl;
-
-    // --- 示例2: 从 wstring 转换回 string ---
-
-    std::string back_to_utf8_str = dmcast::lexical_cast<std::string>(wide_str);
-
-    std::cout << "Converted back to std::string (UTF-8): " << back_to_utf8_str << std::endl;
-
     return 0;
 }
