@@ -1,5 +1,5 @@
-#ifndef __DMPLATFORMHASH_H_INCLUDE__
-#define __DMPLATFORMHASH_H_INCLUDE__
+#ifndef ___DMTYPETRAITS_PLATFORMHASH_H_INCLUDE__
+#define ___DMTYPETRAITS_PLATFORMHASH_H_INCLUDE__
 
 #include "dmtypetraits_base.h"
 #include "dmtypetraits_md5.h"
@@ -42,7 +42,6 @@ namespace dm {
         using LinuxHashType = PlatformHashTag<detail::linux_hash>;
         using UnknownHashType = PlatformHashTag<detail::unknown_hash>;
 
-        // 当前平台类型（编译时确定）
         template<uint32_t CurrentHash>
         struct CurrentPlatformType {
             using type = dm_conditional_t<
@@ -62,7 +61,6 @@ namespace dm {
 
         using CurrentPlatform = typename CurrentPlatformType<detail::current_os_hash>::type;
 
-        // 类型萃取
         template<typename PlatformHashType>
         struct PlatformHashTraits;
 
@@ -70,7 +68,6 @@ namespace dm {
         struct PlatformHashTraits<WindowsHashType> {
             static constexpr const char* name() { return "Windows"; }
             static constexpr bool is_unix_like() { return false; }
-            // 新增：文件分隔符
             static constexpr char file_separator() { return '\\'; }
         };
 
@@ -78,7 +75,6 @@ namespace dm {
         struct PlatformHashTraits<MacOSHashType> {
             static constexpr const char* name() { return "macOS"; }
             static constexpr bool is_unix_like() { return true; }
-            // 新增：文件分隔符
             static constexpr char file_separator() { return '/'; }
         };
 
@@ -86,7 +82,6 @@ namespace dm {
         struct PlatformHashTraits<LinuxHashType> {
             static constexpr const char* name() { return "Linux"; }
             static constexpr bool is_unix_like() { return true; }
-            // 新增：文件分隔符
             static constexpr char file_separator() { return '/'; }
         };
 
@@ -94,11 +89,18 @@ namespace dm {
         struct PlatformHashTraits<UnknownHashType> {
             static constexpr const char* name() { return "Unknown"; }
             static constexpr bool is_unix_like() { return false; }
-            // 新增：文件分隔符 (默认使用'/')
             static constexpr char file_separator() { return '/'; }
         };
+        inline void PrintCurrentPlatformInfo() {
+            using Traits = dm::platform::PlatformHashTraits<CurrentPlatform>;
 
+            std::cout << "=== 平台信息 ===" << std::endl;
+            std::cout << "平台名称: " << Traits::name() << std::endl;
+            std::cout << "是否Unix-like: " << (Traits::is_unix_like() ? "是" : "否") << std::endl;
+            std::cout << "文件分隔符: " << Traits::file_separator() << std::endl;
+            std::cout << "平台哈希值: 0x" << std::hex << CurrentPlatform::hash_value << std::endl;
+        }
     } // namespace platform
 } // namespace dm
 
-#endif // __DMPLATFORMHASH_H_INCLUDE__
+#endif // ___DMTYPETRAITS_PLATFORMHASH_H_INCLUDE__
